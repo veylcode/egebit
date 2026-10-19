@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Личный кабинет Egebit: задачи ЕГЭ по информатике, Python, результаты и шаблоны.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src https://egebit-5-83-140-108.sslip.io; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Egebit — кабинет</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#solve"><span class="brand-icon">e<span>:</span></span><strong>egebit<span>ИНФОРМАТИКА ЕГЭ</span></strong></a>
+    <div class="nav-label">РАБОЧЕЕ ПРОСТРАНСТВО</div>
+    <nav aria-label="Основное меню">
+      <button data-page="solve" class="nav active"><span>＋</span>Новая задача</button>
+      <button data-page="history" class="nav"><span>▤</span>Мои заявки<span id="jobs-count" class="nav-count">—</span></button>
+      <button data-page="templates" class="nav"><span>⌘</span>Шаблоны</button>
+      <button data-page="help" class="nav"><span>?</span>Как пользоваться</button>
+      <button data-page="admin" class="nav admin-only" hidden><span>⚙</span>Управление</button>
+    </nav>
+    <div class="sidebar-bottom"><div class="bot-card"><span class="bot-dot"></span><div><strong>Egebit в Telegram</strong><small>Тот же бот. Твои задачи.</small></div><a href="https://t.me/egebit_bot" target="_blank" rel="noopener noreferrer" aria-label="Открыть бота">↗</a></div><div class="user-card"><div class="avatar" id="avatar">?</div><div><strong id="user-name">Личный кабинет</strong><small id="user-subtitle">Вход через Telegram</small></div><button id="logout" hidden title="Выйти">↪</button></div></div>
+  </aside>
+  <div class="workspace">
+    <header><div class="breadcrumb">Кабинет <span>/</span> <b id="page-name">Новая задача</b></div><div id="connection" class="connection">Подключение…</div></header>
+    <main>
+      <section id="login-card" class="login-card"><div class="login-symbol">↗</div><div><h2>Твой кабинет. Один вход через Telegram.</h2><p>Отправь <button class="inline-copy" id="copy-web">/web</button> в группе бота и открой персональную ссылку. Она действует 5 минут.</p><small>Только для участников группы. Пароль и доступ к аккаунту Telegram не нужны.</small></div><a class="button secondary" href="https://t.me/egebit_bot" target="_blank" rel="noopener noreferrer">Открыть Telegram ↗</a></section>
+      <section id="page-solve" class="page">
+        <div class="page-heading"><div><div class="eyebrow">ОТ УСЛОВИЯ К РЕШЕНИЮ</div><h1>Разберём задачу<span>.</span></h1><p>Выбери номер, добавь условие — остальное возьмёт на себя Egebit.</p></div><span class="tag">Python · ЕГЭ 1–27</span></div>
+        <div class="solve-layout"><div class="compose panel">
+          <div class="section-title"><span class="step">01</span><h2>Какое задание решаем?</h2><span id="selected-label">№14</span></div>
+          <div class="task-grid" id="task-grid" role="group" aria-label="Номер задания"></div><div class="legend"><i></i> Есть Python-шаблон <span>Один номер — несколько условий</span></div>
+          <div class="section-title second"><span class="step">02</span><h2>Добавь условие</h2><button class="text-button" data-goto="help">Как писать степени ↗</button></div>
+          <label class="sr-only" for="condition">Условие задачи</label><textarea id="condition" maxlength="12000" placeholder="Вставь текст задачи сюда…&#10;&#10;Можно отправить несколько условий сразу. Каждое получит отдельное решение."></textarea>
+          <div class="text-meta"><span>Степень: <code>7**270</code> · Основание: <code>ABxCD_27</code></span><span id="char-count">0 / 12 000</span></div>
+          <label id="dropzone" class="dropzone" for="attachment"><span class="upload-icon">↑</span><span><strong>Прикрепить файл</strong> или перетащить сюда<small>Фото, TXT, CSV, PY, PDF, DOCX · до 4 МБ</small></span><input id="attachment" type="file" accept=".jpg,.jpeg,.png,.webp,.txt,.csv,.py,.json,.pdf,.docx" hidden></label>
+          <div id="file-preview" class="file-preview" hidden></div>
+          <div class="compose-footer"><p>Условие и готовые решения появятся в группе.<br>На сайте и в боте — общая очередь и лимит.</p><button class="button primary" id="submit" disabled>Отправить задачу <span>↗</span></button></div>
+        </div><aside class="right-column"><div class="quota-card"><div class="quota-top"><span>ТВОЙ ЛИМИТ</span><span>◷ 5 часов</span></div><div class="quota-number"><strong id="quota-left">—</strong><span id="quota-total">задач осталось</span></div><div class="progress-track"><div id="quota-bar"></div></div><div class="quota-details"><b id="quota-percent">Войди, чтобы увидеть лимит</b><span id="quota-reset">Общий с Telegram</span></div></div><div class="panel mini-panel"><span class="mini-icon">✦</span><h3>Больше одной задачи?<br>Так тоже можно.</h3><p>Вставь подборку или прикрепи фото. Egebit выделит все читаемые условия и решит каждое отдельно.</p><div class="mini-divider"></div><div class="mini-row"><span>⌘</span><p>Код на Python<br><small>Без комментариев, с простыми переменными</small></p></div><div class="mini-row"><span>✓</span><p>Проверка выполнения<br><small>Запуск в ограниченной песочнице</small></p></div></div><div class="small-note">Время зависит от сложности и очереди. Статус обновляется автоматически.</div></aside></div>
+        <div class="section-heading"><h2>Последние заявки <span id="recent-count"></span></h2><button class="text-button" data-goto="history">Вся история ↗</button></div><div id="recent-jobs" class="jobs-list"><div class="empty-state">После входа здесь появятся твои заявки.</div></div>
+      </section>
+      <section id="page-history" class="page" hidden><div class="page-heading"><div><div class="eyebrow">ВСЁ ПОД РУКОЙ</div><h1>Мои заявки<span>.</span></h1><p>Очередь, готовый код и ответы из сайта и Telegram.</p></div><button class="button secondary" id="refresh">Обновить ↻</button></div><div class="filter-row"><input id="job-search" placeholder="Номер заявки или текст условия" aria-label="Поиск заявки"><select id="job-filter" aria-label="Фильтр состояния"><option value="">Все статусы</option><option value="active">В работе</option><option value="done">Готово</option><option value="needs_details">Нужно уточнение</option><option value="failed">Ошибка</option></select><label class="admin-only" hidden><input id="all-jobs" type="checkbox"> Все участники</label></div><div id="history-jobs" class="jobs-list"></div></section>
+      <section id="page-templates" class="page" hidden><div class="page-heading"><div><div class="eyebrow">ПРОВЕРЕННЫЙ ПОДХОД</div><h1>Шаблоны<span>.</span></h1><p>Подходящие примеры помогают боту сохранять нужный стиль решения.</p></div></div><div id="template-grid" class="template-grid"></div><div class="notice">Шаблон — образец, а не гарантия правильности любой задачи. Изменять библиотеку может только владелец.</div></section>
+      <section id="page-help" class="page" hidden><div class="page-heading"><div><div class="eyebrow">КОРОТКО О ГЛАВНОМ</div><h1>Как всё работает<span>.</span></h1><p>Один кабинет, одна очередь, понятный результат.</p></div></div><div class="help-grid"><article class="panel"><h2>01 · Отправка</h2><p>Выбери номер 1–27 и вставь полное условие либо прикрепи файл. Несколько задач на одном фото будут выделены отдельно. Передавай крупные, чёткие изображения без обрезанных строк.</p><p>Один файл — одна заявка. Внутри неё может быть до 50 задач. Несколько файлов можно отправить последовательными заявками.</p></article><article class="panel"><h2>02 · Степени и основания</h2><p>Степень: <code>75**314</code>, <code>75^314</code> или 75³¹⁴.</p><p>Основание: <code>2ExG8_19</code>, <code>2ExG8(19)</code> или 2ExG8₁₉. На фото сохраняй положение верхних и нижних индексов. Если запись неоднозначна, бот попросит уточнение.</p></article><article class="panel"><h2>03 · Лимит и очередь</h2><p>Каждая распознанная задача учитывается отдельно. Пока число задач на фото неизвестно, резервируется одно использование. После распознавания счётчик уточняется.</p><p>Пятичасовое окно начинается с первой принятой задачи; время обновления видно справа. /retry не списывает квоту повторно, но расходы API сохраняются.</p></article><article class="panel"><h2>04 · Результат и проверка</h2><p>Открой заявку: для каждой задачи будет свой код, ответ и фактическая отметка проверки. Код выполняется в изоляции; совпадение вывода с ответом само по себе не доказывает математическую правильность.</p><p>При нехватке данных добавь уточнение или исходный TXT/CSV внутри заявки. Ошибочную заявку можно повторить, ожидающую — отменить.</p></article><article class="panel"><h2>05 · Файлы</h2><p>Фото JPG/PNG/WEBP, TXT/CSV/PY/JSON, текстовый PDF до 20 страниц, DOCX — до 4 МБ. Скан PDF отправляй фотографией. Рисунки внутри PDF/DOCX не распознаются.</p><p>Код запускается без сети и доступа к файлам сервера. В админке .py/.txt принимаются как примеры, с проверкой синтаксиса.</p></article><article class="panel"><h2>06 · Доступ</h2><p>Для входа отправь /web в разрешённой группе и открой персональную ссылку. Не пересылай её. Ссылка действует 5 минут и используется один раз; сеанс — 8 часов.</p><p>Условие и ответы доступны группе. Кабинет показывает твои заявки; владелец также видит управление ботом и общую очередь. Доступ проверяется через Telegram.</p></article></div></section>
+      <section id="page-admin" class="page" hidden><div class="page-heading"><div><div class="eyebrow">ДЛЯ ВЛАДЕЛЬЦА</div><h1>Управление<span>.</span></h1><p>Настройки, библиотека и расходы действуют одновременно на сайте и в боте.</p></div></div><div id="admin-content"></div></section>
+    </main><footer><span>egebit <b>·</b> информатика становится понятнее</span><span>Код. Ответ. Следующая задача.</span></footer>
+  </div>
+  <dialog id="job-dialog"><div class="dialog-header"><div><small>ЗАЯВКА</small><h2 id="detail-title"></h2></div><button id="close-detail" class="icon-button" aria-label="Закрыть">×</button></div><div id="detail-content"></div></dialog>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
