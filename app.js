@@ -5,7 +5,7 @@ const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]));
 const names = {solve: 'Новая задача', history: 'Мои заявки', templates: 'Шаблоны', help: 'Как пользоваться', admin: 'Управление'};
 const states = {queued: 'В очереди', retry: 'Ожидание повтора', running: 'Решаем', delivering: 'Отправляем ответ', done: 'Готово', needs_details: 'Нужно уточнение', failed: 'Ошибка', cancelled: 'Отменено', delivery_failed: 'Ошибка доставки'};
-let token = sessionStorage.getItem('egebit-session') || localStorage.getItem('egebit-guest') || '';
+let token = sessionStorage.getItem('egebit-session') || localStorage.getItem('egebit-account') || localStorage.getItem('egebit-guest') || '';
 let me = null, jobs = [], selected = 14, page = 'solve', detailId = null, pollBusy = false, requestId = null, imageUrl = null, submitting = false;
 
 function toast(text, error = false) {
@@ -24,7 +24,8 @@ function connection(text, ok = false) {
 async function api(path, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.method ? 120000 : 15000);
-  const headers = {...(token ? {Authorization: `Bearer ${token}`} : {}), ...options.headers};
+  const requestToken = token;
+  const headers = {...(requestToken ? {Authorization: `Bearer ${requestToken}`} : {}), ...options.headers};
   if (options.body && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
     options.body = JSON.stringify(options.body);
@@ -33,7 +34,7 @@ async function api(path, options = {}) {
     const response = await fetch(API + path, {...options, headers, signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer'});
     const data = await response.json();
     if (!response.ok) {
-      if ((response.status === 401 && path !== '/api/login') || (response.status === 403 && path === '/api/me')) signedOut();
+      if (token === requestToken && ((response.status === 401 && path !== '/api/login' && !path.startsWith('/api/account/')) || (response.status === 403 && path === '/api/me'))) signedOut();
       throw new Error(data.error || `Ошибка ${response.status}`);
     }
     connection('На связи', true);
@@ -62,12 +63,15 @@ function navigate(next) {
 }
 
 function signedOut() {
+  if (token === localStorage.getItem('egebit-account')) localStorage.removeItem('egebit-account');
+  if (token === localStorage.getItem('egebit-guest')) localStorage.removeItem('egebit-guest');
   token = ''; me = null; jobs = [];
   sessionStorage.removeItem('egebit-session');
-  localStorage.removeItem('egebit-guest');
   $('#login-card').hidden = false;
   $('#guest-retry').hidden = false;
   $('#logout').hidden = true;
+  $('#account-logout').hidden = true;
+  $('#account-actions').hidden = false;
   $('#submit').disabled = true;
   $('#user-name').textContent = 'Подключение';
   $('#user-subtitle').textContent = 'Гостевой доступ без входа';
@@ -85,12 +89,16 @@ function signedOut() {
 
 function renderMe() {
   $('#login-card').hidden = !me.guest;
+  $('#account-strip').hidden = me.telegram;
+  $('#account-actions').hidden = !me.guest;
+  $('#account-logout').hidden = me.guest;
+  $('#account-label').textContent = me.guest ? 'Гостевой режим' : me.name;
   $('#logout').hidden = me.guest;
   $('#submit').disabled = submitting;
   $('#user-name').textContent = me.name;
-  $('#user-subtitle').textContent = me.guest ? 'Без входа · этот браузер' : me.admin ? 'Владелец · кабинет' : 'Участник группы';
-  $('#submission-note').textContent = me.guest ? 'Условие и ответы останутся в этом браузере. Гостевой лимит общий для одной сети.' : 'Условие и ответы появятся в группе. На сайте и в боте — общая очередь и лимит.';
-  $('#history-note').textContent = me.guest ? 'Заявки этого браузера. Гостевой сеанс — 8 часов.' : 'Очередь, код и ответы из сайта и Telegram.';
+  $('#user-subtitle').textContent = me.guest ? 'Без входа · этот браузер' : me.admin ? 'Владелец · кабинет' : me.telegram ? 'Участник группы' : 'Аккаунт сайта';
+  $('#submission-note').textContent = me.telegram ? 'Условие и ответы появятся в группе. На сайте и в боте — общая очередь и лимит.' : me.guest ? 'Условия и ответы доступны в этом браузере. Лимит — 15 задач на устройство за 5 часов.' : 'Условия и ответы сохранятся в аккаунте. Лимит — 15 задач на устройство за 5 часов.';
+  $('#history-note').textContent = me.telegram ? 'Очередь, код и ответы из сайта и Telegram.' : me.guest ? 'Заявки этого браузера.' : 'Заявки твоего аккаунта.';
   $('#avatar').textContent = me.name.slice(0, 1).toUpperCase();
   $('#quota-left').textContent = me.quota.left;
   $('#quota-total').textContent = `из ${me.quota.limit} задач осталось`;
@@ -229,13 +237,16 @@ async function loadTemplate(number) {
   $('#template-code').scrollIntoView({behavior: 'smooth', block: 'center'});
 }
 
-async function refresh() {
-  if (!token || pollBusy) return;
+async function refresh(force = false) {
+  if (!token || (pollBusy && !force)) return;
+  const refreshToken = token;
   pollBusy = true;
   try {
     const profile = await api('/api/me');
+    if (token !== refreshToken) return;
     me = profile; renderMe();
     const data = await api('/api/jobs' + (me.admin && $('#all-jobs').checked ? '?all=1' : ''));
+    if (token !== refreshToken) return;
     jobs = data.jobs; renderJobs();
     if (detailId && $('#job-dialog').open) await renderDetail();
   } finally { pollBusy = false; }
@@ -263,7 +274,9 @@ document.addEventListener('click', async (event) => {
     else if (button.id === 'refresh') await refresh();
     else if (button.id === 'remove-file') { $('#attachment').value = ''; requestId = null; filePreview(); }
     else if (button.id === 'copy-web') { await navigator.clipboard.writeText('/web'); toast('Команда /web скопирована. Отправь её в группе.'); }
-    else if (button.id === 'logout') { await api('/api/logout', {method: 'POST', body: {}}); signedOut(); await guestAccess(); }
+    else if (button.id === 'logout' || button.id === 'account-logout') { await api('/api/logout', {method: 'POST', body: {}}); signedOut(); await guestAccess(); }
+    else if (button.dataset.auth) openAuth(button.dataset.auth);
+    else if (button.id === 'close-auth') $('#auth-dialog').close();
     else if (button.id === 'guest-retry') await guestAccess();
     else if (button.id === 'close-detail') { $('#job-dialog').close(); detailId = null; }
     else if (button.id === 'load-template') await loadTemplate($('#edit-number').value);
@@ -287,7 +300,19 @@ document.addEventListener('submit', async (event) => {
   event.preventDefault();
   const form = event.target;
   try {
-    if (form.id === 'settings-form') {
+    if (form.id === 'account-form') {
+      const submitButton = $('#auth-submit');
+      if (submitButton.disabled) return;
+      submitButton.disabled = true; $('#auth-error').textContent = '';
+      try {
+        const data = await api(`/api/account/${form.dataset.mode}`, {method:'POST', body:{login:$('#auth-login').value, password:$('#auth-password').value, device:localStorage.getItem('egebit-device') || ''}});
+        token = data.token; localStorage.setItem('egebit-account',token); localStorage.setItem('egebit-device',data.device);
+        sessionStorage.removeItem('egebit-session');
+        form.reset(); $('#auth-dialog').close();
+        await refresh(true); await navigate(me.admin ? 'admin' : 'solve'); toast('Вход выполнен.');
+      } catch (error) { $('#auth-error').textContent = error.message; }
+      finally { submitButton.disabled = false; }
+    } else if (form.id === 'settings-form') {
       const values = new FormData(form);
       for (const [name, value] of values) await api('/api/admin/action', {method: 'POST', body: {action: 'set', args: `${name} ${value}`}});
       toast('Настройки сохранены.'); await refresh(); await loadAdmin();
@@ -343,7 +368,9 @@ async function boot() {
     } catch (error) { token = localStorage.getItem('egebit-guest') || ''; toast(error.message, true); }
   }
   renderGrid(); renderTemplates(); navigate(location.hash.slice(1));
-  if (token) {
+  if (token && (!localStorage.getItem('egebit-device') && !sessionStorage.getItem('egebit-session') && !localStorage.getItem('egebit-account'))) {
+    await guestAccess();
+  } else if (token) {
     try { await refresh(); } catch (error) { toast(error.message, true); }
   }
   if (!token) await guestAccess();
@@ -351,10 +378,23 @@ async function boot() {
 
 async function guestAccess() {
   try {
-    const data = await api('/api/guest', {method: 'POST', body: {}});
+    const data = await api('/api/guest', {method: 'POST', body: {device:localStorage.getItem('egebit-device') || ''}});
     token = data.token; localStorage.setItem('egebit-guest', token);
-    await refresh();
+    localStorage.setItem('egebit-device',data.device);
+    await refresh(true);
     $('#guest-retry').hidden = true;
   } catch (error) { toast(error.message, true); $('#guest-retry').hidden = false; }
 }
+
+function openAuth(mode) {
+  const register = mode === 'register';
+  $('#account-form').dataset.mode = mode;
+  $('#auth-title').textContent = register ? 'Регистрация' : 'Вход';
+  $('#auth-submit').textContent = register ? 'Создать аккаунт' : 'Войти';
+  $('#auth-password').autocomplete = register ? 'new-password' : 'current-password';
+  $('#auth-error').textContent = '';
+  $('#auth-register-note').hidden = !register;
+  if (!$('#auth-dialog').open) $('#auth-dialog').showModal();
+}
+$('#auth-dialog').addEventListener('close', () => { $('#auth-password').value = ''; });
 boot();
