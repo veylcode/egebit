@@ -5,7 +5,7 @@ const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]));
 const names = {solve: 'Новая задача', history: 'Мои заявки', templates: 'Шаблоны', help: 'Как пользоваться', admin: 'Управление'};
 const states = {queued: 'В очереди', retry: 'Ожидание повтора', running: 'Решаем', delivering: 'Отправляем ответ', done: 'Готово', needs_details: 'Нужно уточнение', failed: 'Ошибка', cancelled: 'Отменено', delivery_failed: 'Ошибка доставки'};
-let token = sessionStorage.getItem('egebit-session') || '';
+let token = sessionStorage.getItem('egebit-session') || localStorage.getItem('egebit-guest') || '';
 let me = null, jobs = [], selected = 14, page = 'solve', detailId = null, pollBusy = false, requestId = null, imageUrl = null, submitting = false;
 
 function toast(text, error = false) {
@@ -64,15 +64,17 @@ function navigate(next) {
 function signedOut() {
   token = ''; me = null; jobs = [];
   sessionStorage.removeItem('egebit-session');
+  localStorage.removeItem('egebit-guest');
   $('#login-card').hidden = false;
+  $('#guest-retry').hidden = false;
   $('#logout').hidden = true;
   $('#submit').disabled = true;
-  $('#user-name').textContent = 'Личный кабинет';
-  $('#user-subtitle').textContent = 'Вход через Telegram';
+  $('#user-name').textContent = 'Подключение';
+  $('#user-subtitle').textContent = 'Гостевой доступ без входа';
   $('#avatar').textContent = '?';
   $('#quota-left').textContent = '—';
-  $('#quota-percent').textContent = 'Войди, чтобы увидеть лимит';
-  $('#quota-reset').textContent = 'Общий с Telegram';
+  $('#quota-percent').textContent = 'Загрузка лимита';
+  $('#quota-reset').textContent = '5 часов';
   $('#quota-bar').style.width = '0%';
   $('#admin-content').replaceChildren();
   $('#detail-content').replaceChildren();
@@ -82,11 +84,13 @@ function signedOut() {
 }
 
 function renderMe() {
-  $('#login-card').hidden = true;
-  $('#logout').hidden = false;
+  $('#login-card').hidden = !me.guest;
+  $('#logout').hidden = me.guest;
   $('#submit').disabled = submitting;
   $('#user-name').textContent = me.name;
-  $('#user-subtitle').textContent = me.admin ? 'Владелец · кабинет' : 'Участник группы';
+  $('#user-subtitle').textContent = me.guest ? 'Без входа · этот браузер' : me.admin ? 'Владелец · кабинет' : 'Участник группы';
+  $('#submission-note').textContent = me.guest ? 'Условие и ответы останутся в этом браузере. Гостевой лимит общий для одной сети.' : 'Условие и ответы появятся в группе. На сайте и в боте — общая очередь и лимит.';
+  $('#history-note').textContent = me.guest ? 'Заявки этого браузера. Гостевой сеанс — 8 часов.' : 'Очередь, код и ответы из сайта и Telegram.';
   $('#avatar').textContent = me.name.slice(0, 1).toUpperCase();
   $('#quota-left').textContent = me.quota.left;
   $('#quota-total').textContent = `из ${me.quota.limit} задач осталось`;
@@ -110,12 +114,12 @@ function renderGrid() {
 
 function renderTemplates() {
   if (!me) {
-    $('#template-grid').innerHTML = '<div class="empty-state">Войди, чтобы увидеть актуальную библиотеку.</div>';
+    $('#template-grid').innerHTML = '<div class="empty-state">Библиотека загружается после подключения к серверу.</div>';
     return;
   }
   $('#template-grid').innerHTML = Array.from({length: 27}, (_, index) => {
     const number = index + 1, item = me.templates.find((template) => template.number === number);
-    return `<button class="template-card ${item ? 'available' : ''}" data-template="${number}"><div><span class="template-number">${String(number).padStart(2, '0')}</span><span class="tag">${item ? 'Есть шаблон' : 'Базовый подход'}</span></div><h3>Задание №${number}</h3><p>${item ? `${esc(item.filename)}<br>${item.examples || 1} примеров · ${date(item.updated)}` : 'Индивидуальное решение условия'}</p><span class="text-button">${me.admin ? 'Открыть шаблон' : 'Решить задачу'} ↗</span></button>`;
+    return `<button class="template-card ${item ? 'available' : ''}" data-template="${number}"><div><span class="template-number">${number}</span><span class="tag">${item ? 'Есть шаблон' : 'Базовый подход'}</span></div><h3>Задание №${number}</h3><p>${item ? `${esc(item.filename)}<br>${item.examples || 1} примеров · ${date(item.updated)}` : 'Индивидуальное решение условия'}</p><span class="text-button">${me.admin ? 'Открыть шаблон' : 'Решить задачу'} ↗</span></button>`;
   }).join('');
 }
 
@@ -129,7 +133,7 @@ function jobCard(job) {
 function renderJobs() {
   $('#jobs-count').textContent = me ? jobs.length : '—';
   $('#recent-count').textContent = me && jobs.length ? String(jobs.length) : '';
-  $('#recent-jobs').innerHTML = jobs.slice(0, 3).map(jobCard).join('') || `<div class="empty-state">${me ? 'Пока пусто. Отправь первую задачу — она появится здесь.' : 'После входа здесь появятся твои заявки.'}</div>`;
+  $('#recent-jobs').innerHTML = jobs.slice(0, 3).map(jobCard).join('') || `<div class="empty-state">${me ? 'Пока пусто. Отправь первую задачу — она появится здесь.' : 'Здесь появятся отправленные задачи.'}</div>`;
   const query = $('#job-search').value.trim().toLowerCase(), filter = $('#job-filter').value;
   const list = jobs.filter((job) => (!query || `${job.id} ${job.text}`.toLowerCase().includes(query)) && (!filter || (filter === 'active' ? ['queued', 'retry', 'running', 'delivering'].includes(job.state) : job.state === filter)));
   $('#history-jobs').innerHTML = list.map(jobCard).join('') || '<div class="empty-state">Заявок с такими условиями нет.</div>';
@@ -148,7 +152,7 @@ function filePreview() {
 
 async function submit() {
   if (submitting) return;
-  if (!me) return toast('Открой персональную ссылку из /web в группе.', true);
+  if (!me) return toast('Дождись подключения гостевого доступа или нажми повтор подключения.', true);
   const text = $('#condition').value.trim(), file = $('#attachment').files[0];
   if (!text && !file) return toast('Добавь условие задачи.', true);
   const body = new FormData(); body.set('text', text); body.set('number', selected);
@@ -259,7 +263,8 @@ document.addEventListener('click', async (event) => {
     else if (button.id === 'refresh') await refresh();
     else if (button.id === 'remove-file') { $('#attachment').value = ''; requestId = null; filePreview(); }
     else if (button.id === 'copy-web') { await navigator.clipboard.writeText('/web'); toast('Команда /web скопирована. Отправь её в группе.'); }
-    else if (button.id === 'logout') { await api('/api/logout', {method: 'POST', body: {}}); signedOut(); }
+    else if (button.id === 'logout') { await api('/api/logout', {method: 'POST', body: {}}); signedOut(); await guestAccess(); }
+    else if (button.id === 'guest-retry') await guestAccess();
     else if (button.id === 'close-detail') { $('#job-dialog').close(); detailId = null; }
     else if (button.id === 'load-template') await loadTemplate($('#edit-number').value);
     else if (button.id === 'download-template') download($('#template-filename').value || 'template.py', $('#template-code').value);
@@ -335,13 +340,21 @@ async function boot() {
     try {
       const data = await api('/api/login', {method: 'POST', body: {token: login}});
       token = data.token; sessionStorage.setItem('egebit-session', token);
-    } catch (error) { toast(error.message, true); }
+    } catch (error) { token = localStorage.getItem('egebit-guest') || ''; toast(error.message, true); }
   }
   renderGrid(); renderTemplates(); navigate(location.hash.slice(1));
   if (token) {
     try { await refresh(); } catch (error) { toast(error.message, true); }
-  } else {
-    try { await api('/health'); connection('Сервис доступен', true); } catch { connection('Нет связи с сервером'); }
   }
+  if (!token) await guestAccess();
+}
+
+async function guestAccess() {
+  try {
+    const data = await api('/api/guest', {method: 'POST', body: {}});
+    token = data.token; localStorage.setItem('egebit-guest', token);
+    await refresh();
+    $('#guest-retry').hidden = true;
+  } catch (error) { toast(error.message, true); $('#guest-retry').hidden = false; }
 }
 boot();
