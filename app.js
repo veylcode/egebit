@@ -6,7 +6,7 @@ const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({'&': 
 const names = {solve: 'Новая задача', history: 'Мои заявки', templates: 'Шаблоны', help: 'Как пользоваться', admin: 'Управление'};
 const states = {queued: 'В очереди', retry: 'Ожидание повтора', running: 'Решаем', delivering: 'Отправляем ответ', done: 'Готово', needs_details: 'Нужно уточнение', failed: 'Ошибка', cancelled: 'Отменено', delivery_failed: 'Ошибка доставки'};
 let token = sessionStorage.getItem('egebit-session') || '';
-let me = null, jobs = [], selected = 14, page = 'solve', detailId = null, pollBusy = false, requestId = null, imageUrl = null;
+let me = null, jobs = [], selected = 14, page = 'solve', detailId = null, pollBusy = false, requestId = null, imageUrl = null, submitting = false;
 
 function toast(text, error = false) {
   $('#toast').textContent = text;
@@ -84,7 +84,7 @@ function signedOut() {
 function renderMe() {
   $('#login-card').hidden = true;
   $('#logout').hidden = false;
-  $('#submit').disabled = false;
+  $('#submit').disabled = submitting;
   $('#user-name').textContent = me.name;
   $('#user-subtitle').textContent = me.admin ? 'Владелец · кабинет' : 'Участник группы';
   $('#avatar').textContent = me.name.slice(0, 1).toUpperCase();
@@ -93,7 +93,7 @@ function renderMe() {
   $('#quota-percent').textContent = `${me.quota.percent}% доступно`;
   $('#quota-reset').textContent = me.quota.reset ? `Обновится ${date(me.quota.reset)}` : 'Окно начнётся с первой задачи';
   $('#quota-bar').style.width = `${me.quota.percent}%`;
-  $('#submit').disabled = me.quota.left < 1;
+  $('#submit').disabled = submitting || me.quota.left < 1;
   document.querySelectorAll('.admin-only').forEach((element) => { element.hidden = !me.admin; });
   if (me.paused) connection('Новые решения приостановлены');
   renderGrid(); renderTemplates();
@@ -119,9 +119,11 @@ function renderTemplates() {
   }).join('');
 }
 
+function taskWord(number) { return number % 10 === 1 && number % 100 !== 11 ? 'задача' : number % 10 >= 2 && number % 10 <= 4 && !(number % 100 >= 12 && number % 100 <= 14) ? 'задачи' : 'задач'; }
+
 function jobCard(job) {
   const active = ['queued', 'retry', 'running', 'delivering'].includes(job.state);
-  return `<button class="job-row" data-job="${job.id}"><span class="job-icon ${job.state}">${job.state === 'done' ? '✓' : active ? '◷' : '·'}</span><span class="job-main"><strong>Заявка #${job.id} <span>· №${job.number}</span></strong><small>${esc(job.text || 'Вложение с условием')}${job.count > 1 ? ` · ${job.count} задачи` : ''}</small></span><span class="job-date">${date(job.created)}</span><span class="status ${job.state}">${esc(states[job.state] || job.state)}${job.position ? ` · ${job.position}` : ''}</span><span class="row-arrow">↗</span></button>`;
+  return `<button class="job-row" data-job="${job.id}"><span class="job-icon ${job.state}">${job.state === 'done' ? '✓' : active ? '◷' : '·'}</span><span class="job-main"><strong>Заявка #${job.id} <span>· №${job.number}</span></strong><small>${esc((job.kind && job.kind !== 'task' ? 'Загрузка шаблона' : job.text || 'Вложение с условием').replace(/\s+/g, ' ').slice(0, 140))}${job.count > 1 ? ` · ${job.count} ${taskWord(job.count)}` : ''}</small></span><span class="job-date">${date(job.created)}</span><span class="status ${job.state}">${esc(states[job.state] || job.state)}${job.position ? ` · ${job.position}` : ''}</span><span class="row-arrow">↗</span></button>`;
 }
 
 function renderJobs() {
@@ -145,12 +147,14 @@ function filePreview() {
 }
 
 async function submit() {
+  if (submitting) return;
   if (!me) return toast('Открой персональную ссылку из /web в группе.', true);
   const text = $('#condition').value.trim(), file = $('#attachment').files[0];
   if (!text && !file) return toast('Добавь условие задачи.', true);
   const body = new FormData(); body.set('text', text); body.set('number', selected);
   if (file) body.set('file', file);
   requestId ||= crypto.randomUUID();
+  submitting = true;
   $('#submit').disabled = true; $('#submit').textContent = 'Принимаем…';
   try {
     const result = await api('/api/jobs', {method: 'POST', body, headers: {'X-Request-ID': requestId}});
@@ -159,7 +163,7 @@ async function submit() {
     toast(`Заявка #${result.id} принята. Статус обновится автоматически.`);
     await refresh(); await openJob(result.id);
   } catch (error) { toast(error.message, true); }
-  finally { $('#submit').innerHTML = 'Отправить задачу <span>↗</span>'; $('#submit').disabled = !me || me.quota.left < 1; }
+  finally { submitting = false; $('#submit').innerHTML = 'Отправить задачу <span>↗</span>'; $('#submit').disabled = !me || me.quota.left < 1; }
 }
 
 function download(name, content) {
@@ -186,12 +190,12 @@ async function renderDetail() {
   // Preserve an unfinished clarification while the polling refreshes the main queue.
   if ($('#detail-content .refine-form[data-dirty="true"]')) return;
   const parts = job.parts || [];
-  $('#detail-content').innerHTML = `<div class="detail-meta"><span class="status ${job.state}">${esc(states[job.state] || job.state)}</span><span>${date(job.created)} · №${job.number} · ${job.count || '?'} задач</span></div>${job.text ? `<details><summary>Исходное условие</summary><p class="preserve">${esc(job.text)}</p></details>` : ''}${job.error ? `<div class="notice">${esc(job.error === 'ai_free_checkin' || job.error === 'ai_402' ? 'Бесплатный резерв требует ежедневной активации в кабинете APInex. После устранения причины можно повторить заявку.' : job.error)}</div>` : ''}<div class="detail-actions">${['queued', 'retry'].includes(job.state) ? `<button class="button secondary" data-job-action="cancel" data-id="${id}">Отменить заявку</button>` : ''}${['failed', 'delivery_failed'].includes(job.state) ? `<button class="button primary" data-job-action="retry" data-id="${id}">Повторить заявку</button>` : ''}</div>${parts.map((part) => {
+  $('#detail-content').innerHTML = `<div class="detail-meta"><span class="status ${job.state}">${esc(states[job.state] || job.state)}</span><span>${date(job.created)} · №${job.number} · ${job.count || '?'} ${taskWord(job.count || 0)}</span></div>${job.text ? `<details><summary>Исходное условие</summary><p class="preserve">${esc(job.text)}</p></details>` : ''}${job.error ? `<div class="notice">${esc(job.error === 'ai_free_checkin' || job.error === 'ai_402' ? 'Бесплатный резерв требует ежедневной активации в кабинете APInex. После устранения причины можно повторить заявку.' : job.error)}</div>` : ''}<div class="detail-actions">${['queued', 'retry'].includes(job.state) ? `<button class="button secondary" data-job-action="cancel" data-id="${id}">Отменить заявку</button>` : ''}${['failed', 'delivery_failed'].includes(job.state) ? `<button class="button primary" data-job-action="retry" data-id="${id}">Повторить заявку</button>` : ''}</div>${parts.map((part) => {
     const result = part.result;
     if (!result) return `<article class="result-card"><h3>✦ Задача #${esc(part.source_id || part.part + 1)}</h3><p>Ожидает решения. Готовый результат появится здесь.</p></article>`;
     if (result.status === 'needs_details') return `<article class="result-card"><h3>✦ Задача #${esc(part.source_id || part.part + 1)} · уточнение</h3><p>${esc(result.answer)}</p><form class="refine-form" data-part="${part.part}" data-job="${id}"><textarea name="text" placeholder="Уточнённое условие" maxlength="12000"></textarea>${(result.choices || []).map((choice) => `<label class="choice"><input type="radio" name="choice" value="${esc(choice.value)}">${esc(choice.text)}</label>`).join('')}<label class="file-label">Исходные данные TXT/CSV <input type="file" name="file" accept=".txt,.csv"></label><button class="button primary" type="submit">Продолжить решение ↗</button></form></article>`;
     return `<article class="result-card"><div class="result-title"><h3>✦ Задача #${esc(part.source_id || part.part + 1)}</h3><button class="text-button" data-copy-part="${part.part}">Копировать код ⧉</button></div><pre><code>${esc(result.code || '')}</code></pre><div class="answer"><span>ОТВЕТ</span><strong>${esc(result.answer)}</strong></div>${result.explanation ? `<p>${esc(result.explanation)}</p>` : ''}<small class="verification">${esc(result.verification || '')}</small><button class="text-button" data-download-part="${part.part}">Скачать .py ↓</button></article>`;
-  }).join('')}${!parts.length ? '<div class="empty-state">Условия выделяются после приёма заявки. На фото количество задач пока может быть неизвестно.</div>' : ''}`;
+  }).join('')}${!parts.length && job.kind !== 'task' && job.result ? `<div class="notice">${esc(job.result.answer)}<br>${esc(job.result.explanation || '')}</div>` : !parts.length ? '<div class="empty-state">Условия выделяются после приёма заявки. На фото количество задач пока может быть неизвестно.</div>' : ''}`;
   $('#detail-content').dataset.job = JSON.stringify(job);
   $('#detail-content').dataset.signature = signature;
 }
