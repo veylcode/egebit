@@ -195,7 +195,9 @@ async function openJob(id) {
 
 async function renderDetail() {
   if (!detailId || !token) return;
+  const detailToken = token;
   const id = detailId, job = await api(`/api/jobs/${id}`);
+  if (token !== detailToken) return;
   if (detailId !== id) return;
   const signature = JSON.stringify(job);
   if ($('#detail-content').dataset.signature === signature) return;
@@ -216,7 +218,9 @@ function stripHtml(value) { return String(value).replace(/<[^>]*>/g, '').replace
 
 async function loadAdmin() {
   if (!me?.admin) return;
+  const adminToken = token;
   const data = await api('/api/admin'), settings = data.settings;
+  if (token !== adminToken || !me?.admin) return;
   $('#admin-content').innerHTML = `<div class="admin-layout"><section class="panel admin-panel"><h2>Режим работы</h2><div class="admin-actions"><button class="button ${settings.paused === '1' ? 'primary' : 'secondary'}" data-admin="set" data-args="paused ${settings.paused === '1' ? '0' : '1'}">${settings.paused === '1' ? 'Продолжить очередь' : 'Приостановить решения'}</button><button class="button secondary" data-admin="emoji_on">Вернуть эмодзи</button></div><form id="settings-form">${[['user_limit', 'Задач за 5 часов', 1, 100], ['workers', 'Параллельных задач', 1, 2], ['api_interval', 'Интервал API, секунд', 1, 3600]].map(([name, label, min, max]) => `<label>${label}<input type="number" name="${name}" min="${min}" max="${max}" value="${esc(settings[name])}" required></label>`).join('')}<label>Модель решения<select name="model">${['deepseek-v4.1-flash', 'qwen3.6-35b-a3b'].map((model) => `<option ${settings.model === model ? 'selected' : ''}>${model}</option>`).join('')}</select></label><label>Модель распознавания<select name="vision_model">${['qwen3.6-35b-a3b', 'deepseek-v4.1-flash'].map((model) => `<option ${settings.vision_model === model ? 'selected' : ''}>${model}</option>`).join('')}</select></label><button class="button primary">Сохранить настройки</button></form></section><section class="panel admin-panel"><h2>Расходы и очередь</h2><p class="preserve">${esc(stripHtml(data.budget))}</p>${data.free_budget ? `<details><summary>Бесплатный резерв</summary><p class="preserve">${esc(stripHtml(data.free_budget))}</p></details>` : ''}<p class="preserve">${esc(stripHtml(data.statistics))}</p><button class="button secondary" data-admin="price_refresh">Сверить тариф</button></section></div><section class="panel admin-panel"><h2>Python-шаблоны</h2><p>Загрузи .py или .txt, либо редактируй здесь. Объявление в группе и закреплённая панель обновятся после сохранения.</p><div class="template-editor-bar"><select id="edit-number" aria-label="Номер шаблона">${Array.from({length: 27}, (_, i) => `<option value="${i + 1}">Задание №${i + 1}${me.templates.some((t) => t.number === i + 1) ? ' · есть шаблон' : ''}</option>`).join('')}</select><button class="button secondary" id="load-template">Открыть</button><label class="button secondary">Загрузить .py / .txt<input id="template-upload" type="file" accept=".py,.txt" hidden></label></div><input id="template-filename" value="task1.py" aria-label="Имя файла шаблона"><textarea id="template-code" class="code-editor" placeholder="Открой шаблон или загрузи файл"></textarea><div class="admin-actions"><button class="button primary" id="save-template">Сохранить шаблон</button><button class="button secondary" id="download-template">Скачать</button><button class="button danger" id="delete-template">Удалить</button></div></section><section class="panel admin-panel"><h2>Инструкция модели</h2><textarea id="system-prompt" maxlength="8000">${esc(settings.system_prompt)}</textarea><div class="admin-actions"><button class="button primary" id="save-prompt">Сохранить инструкцию</button><button class="button secondary" data-admin="prompt_reset" data-confirm="Восстановить исходную инструкцию модели?">Восстановить исходную</button></div></section><section class="panel admin-panel"><h2>Лимиты участников</h2><div class="quota-table">${data.quotas.map((quota) => `<div><code>${quota.user}</code><span>${quota.used} использований · окно до ${date(quota.started + 18000)}</span><button class="text-button" data-admin="quota_reset" data-args="${quota.user}" data-confirm="Обнулить лимит этого участника?">Сбросить</button></div>`).join('') || '<p>Пока нет записей.</p>'}</div></section><details class="panel admin-panel"><summary>Точные шаблоны и обслуживание</summary><p>Точные шаблоны привязываются к полному условию. Обычные Python-образцы загружай в разделе выше.</p><div class="quota-table">${(data.exact_keys || []).map((item) => `<div><span>№${item.number} · ${esc(item.condition.slice(0, 100))}</span><button class="text-button" data-exact-delete="${esc(item.key)}">Удалить</button></div>`).join('')}</div><textarea id="exact-templates" class="code-editor">${esc(JSON.stringify(data.exact_templates, null, 2))}</textarea><div class="admin-actions"><button class="button secondary" id="export-exact">Экспорт JSON</button><button class="button secondary" id="import-exact">Импорт списка</button><button class="button danger" data-admin="cache_clear" data-confirm="Очистить кэш? Следующие решения могут потребовать новый запрос API.">Очистить кэш</button></div></details>`;
 }
 
@@ -228,9 +232,11 @@ async function adminAction(action, args = '') {
 }
 
 async function loadTemplate(number) {
+  const templateToken = token;
   await navigate('admin');
   $('#edit-number').value = number;
   const data = await api(`/api/admin/templates/${number}`);
+  if (token !== templateToken || !me?.admin) return;
   $('#template-code').value = data.code;
   $('#template-code').dataset.number = number;
   $('#template-filename').value = data.filename;
