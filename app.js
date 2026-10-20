@@ -83,6 +83,11 @@ function signedOut() {
   $('#quota-bar').style.width = '0%';
   $('#admin-content').replaceChildren();
   $('#detail-content').replaceChildren();
+  $('#library-items').replaceChildren();
+  $('#collection-names').replaceChildren();
+  $('#collection-filter').innerHTML = '<option value="">Все подборки</option>';
+  $('#library-search').value = '';
+  libraryIdentity = ''; librarySignature = '';
   $('#job-dialog').close(); detailId = null;
   document.querySelectorAll('.admin-only').forEach((element) => { element.hidden = true; });
   navigate('solve'); renderGrid(); renderTemplates();
