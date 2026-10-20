@@ -84,7 +84,19 @@ document.addEventListener('click', async (event)=>{
   const button = event.target.closest('button');
   if (!button) return;
   try {
-    if (button.dataset.removeAttachment !== undefined) {
+    if (button.id === 'export-collection') {
+      if (!token || button.disabled) return;
+      button.disabled = true;
+      try {
+        const identityToken = token;
+        const archive = await api('/api/library/export',{method:'POST',body:{collection:$('#collection-filter').value},responseType:'blob'});
+        if (identityToken !== token) return;
+        const url = URL.createObjectURL(archive), link = document.createElement('a');
+        link.href = url; link.download = 'egebit-collection.zip'; link.click();
+        setTimeout(()=>URL.revokeObjectURL(url),60000);
+        toast('Архив подготовлен. Проверь загрузки браузера.');
+      } finally { button.disabled = false; }
+    } else if (button.dataset.removeAttachment !== undefined) {
       selectedFiles.splice(Number(button.dataset.removeAttachment),1); requestId=null; filePreview();
     } else if (button.hasAttribute('data-remove-preview')) {
       const form=button.closest('.preview-form'); button.closest('.draft-task').remove(); form.dataset.dirty='true'; renumberPreview();

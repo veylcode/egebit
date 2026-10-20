@@ -32,13 +32,13 @@ async function api(path, options = {}) {
   }
   try {
     const response = await fetch(API + path, {...options, headers, signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer'});
-    const data = await response.json();
     if (!response.ok) {
+      const data = await response.json();
       if (token === requestToken && ((response.status === 401 && path !== '/api/login' && !path.startsWith('/api/account/')) || (response.status === 403 && path === '/api/me'))) signedOut();
       throw new Error(data.error || `Ошибка ${response.status}`);
     }
     connection('На связи', true);
-    return data;
+    return options.responseType === 'blob' ? await response.blob() : await response.json();
   } catch (error) {
     if (error instanceof TypeError || error.name === 'AbortError') {
       connection('Нет связи с сервером');
