@@ -131,6 +131,20 @@ function renderTemplates() {
   }).join('');
 }
 
+function errorMessage(code) {
+  const messages = {
+    ai_task_budget: 'Не хватило доступного API-бюджета для продолжения этой задачи. Заявка и готовые части сохранены. Повтор не списывает лимит задач заново.',
+    ai_budget: 'Сейчас недостаточно общего API-бюджета сервиса. Заявка сохранена; администратору нужно проверить расходы.',
+    ai_rate_limit: 'Сервис модели временно ограничил частоту запросов. Заявка сохранена.',
+    ai_network: 'Не удалось связаться с моделью. Можно повторить сохранённую заявку.',
+    ai_server: 'Сервис модели временно недоступен. Можно повторить заявку позже.',
+    ai_invalid_result: 'Модель не подготовила корректное решение после проверок. Непроверенный код не опубликован.',
+    ai_code_style: 'Не удалось подготовить код в нужном формате. Можно повторить заявку.',
+    ai_free_checkin: 'Эта старая ошибка относится к отключённому APInex. Теперь доступен Яндекс; можно повторить заявку.',
+  };
+  return messages[code] || 'Обработка не завершилась. Заявка сохранена; можно повторить её без нового списания лимита задач.';
+}
+
 function taskWord(number) { return number % 10 === 1 && number % 100 !== 11 ? 'задача' : number % 10 >= 2 && number % 10 <= 4 && !(number % 100 >= 12 && number % 100 <= 14) ? 'задачи' : 'задач'; }
 
 function jobCard(job) {
@@ -204,9 +218,9 @@ async function renderDetail() {
   // Preserve an unfinished clarification while the polling refreshes the main queue.
   if ($('#detail-content .refine-form[data-dirty="true"]')) return;
   const parts = job.parts || [];
-  $('#detail-content').innerHTML = `<div class="detail-meta"><span class="status ${job.state}">${esc(states[job.state] || job.state)}</span><span>${date(job.created)} · №${job.number} · ${job.count || '?'} ${taskWord(job.count || 0)}</span></div>${job.text ? `<details><summary>Исходное условие</summary><p class="preserve">${esc(job.text)}</p></details>` : ''}${job.error ? `<div class="notice">${esc(job.error === 'ai_free_checkin' || job.error === 'ai_402' ? 'Бесплатный резерв требует ежедневной активации в кабинете APInex. После устранения причины можно повторить заявку.' : job.error)}</div>` : ''}<div class="detail-actions">${['queued', 'retry'].includes(job.state) ? `<button class="button secondary" data-job-action="cancel" data-id="${id}">Отменить заявку</button>` : ''}${['failed', 'delivery_failed'].includes(job.state) ? `<button class="button primary" data-job-action="retry" data-id="${id}">Повторить заявку</button>` : ''}</div>${parts.map((part) => {
+  $('#detail-content').innerHTML = `<div class="detail-meta"><span class="status ${job.state}">${esc(states[job.state] || job.state)}</span><span>${date(job.created)} · №${job.number} · ${job.count || '?'} ${taskWord(job.count || 0)}</span></div>${job.text ? `<details><summary>Исходное условие</summary><p class="preserve">${esc(job.text)}</p></details>` : ''}${job.error ? `<div class="notice" role="alert">${esc(errorMessage(job.error))}</div>` : ''}<div class="detail-actions">${['queued', 'retry'].includes(job.state) ? `<button class="button secondary" data-job-action="cancel" data-id="${id}">Отменить заявку</button>` : ''}${['failed', 'delivery_failed'].includes(job.state) ? `<button class="button primary" data-job-action="retry" data-id="${id}">Повторить заявку</button>` : ''}</div>${parts.map((part) => {
     const result = part.result;
-    if (!result) return `<article class="result-card"><h3>✦ Задача #${esc(part.source_id || part.part + 1)}</h3><p>Ожидает решения. Готовый результат появится здесь.</p></article>`;
+    if (!result) return `<article class="result-card"><h3>✦ Задача #${esc(part.source_id || part.part + 1)}</h3><p>${job.state === 'failed' || job.state === 'delivery_failed' ? 'Обработка остановлена. Решение ещё не получено; причина указана выше.' : job.state === 'cancelled' ? 'Заявка отменена.' : 'Задача принята. Здесь появится результат обработки.'}</p></article>`;
     if (result.status === 'needs_details') return `<article class="result-card"><h3>✦ Задача #${esc(part.source_id || part.part + 1)} · уточнение</h3><p>${esc(result.answer)}</p><form class="refine-form" data-part="${part.part}" data-job="${id}"><textarea name="text" placeholder="Уточнённое условие" maxlength="12000"></textarea>${(result.choices || []).map((choice) => `<label class="choice"><input type="radio" name="choice" value="${esc(choice.value)}">${esc(choice.text)}</label>`).join('')}<label class="file-label">Исходные данные TXT/CSV <input type="file" name="file" accept=".txt,.csv"></label><button class="button primary" type="submit">Продолжить решение ↗</button></form></article>`;
     return `<article class="result-card"><div class="result-title"><h3>✦ Задача #${esc(part.source_id || part.part + 1)}</h3><button class="text-button" data-copy-part="${part.part}">Копировать код ⧉</button></div><pre><code>${esc(result.code || '')}</code></pre><div class="answer"><span>ОТВЕТ</span><strong>${esc(result.answer)}</strong></div>${result.explanation ? `<p>${esc(result.explanation)}</p>` : ''}<small class="verification">${esc(result.verification || '')}</small><button class="text-button" data-download-part="${part.part}">Скачать .py ↓</button></article>`;
   }).join('')}${!parts.length && job.kind !== 'task' && job.result ? `<div class="notice">${esc(job.result.answer)}<br>${esc(job.result.explanation || '')}</div>` : !parts.length ? '<div class="empty-state">Условия выделяются после приёма заявки. На фото количество задач пока может быть неизвестно.</div>' : ''}`;
