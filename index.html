@@ -12,10 +12,10 @@
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <title>Egebit — кабинет</title>
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=2.7.0">
-  <script src="./features.js?v=2.7.0" defer></script>
-  <script src="./app.js?v=2.7.0" defer></script>
-  <script src="./pwa.js?v=2.7.0" defer></script>
+  <link rel="stylesheet" href="./style.css?v=2.7.1">
+  <script src="./features.js?v=2.7.1" defer></script>
+  <script src="./app.js?v=2.7.1" defer></script>
+  <script src="./pwa.js?v=2.7.1" defer></script>
 </head>
 <body>
   <aside class="sidebar">
@@ -59,7 +59,7 @@
     <datalist id="collection-names"></datalist></main><footer><span>Egebit · ЕГЭ по информатике</span><div class="app-actions"><button id="install-app" class="text-button">Установить Egebit</button><button id="update-app" class="text-button" hidden>Обновить приложение</button></div></footer>
   </div>
   <dialog id="job-dialog"><div class="dialog-header"><div><small>ЗАЯВКА</small><h2 id="detail-title"></h2></div><button id="close-detail" class="icon-button" aria-label="Закрыть">×</button></div><div id="detail-content"></div></dialog>
-  <dialog id="install-dialog"><div class="dialog-header"><h2>Установить Egebit</h2><button id="close-install" class="icon-button" aria-label="Закрыть установку">×</button></div><p>Android и компьютер: открой меню браузера → «Установить приложение» или «Добавить на главный экран».</p><p>iPhone и iPad: открой сайт в Safari → «Поделиться» → «На экран Домой».</p><p>Новые решения и загрузка подборок требуют интернета. Вход и лимиты остаются прежними.</p></dialog>
+  <dialog id="install-dialog"><div class="dialog-header"><h2>Установить Egebit</h2><button id="close-install" class="icon-button" aria-label="Закрыть установку">×</button></div><p id="install-status" role="status">Проверяем готовность приложения…</p><p>Android и компьютер: открой меню браузера → «Установить приложение» или «Добавить на главный экран».</p><p>iPhone и iPad: открой сайт в Safari → «Поделиться» → «На экран Домой».</p><p>Новые решения и загрузка подборок требуют интернета. Вход и лимиты остаются прежними.</p></dialog>
   <div id="toast" role="status" aria-live="polite" hidden></div>
   <dialog id="auth-dialog"><div class="dialog-header"><h2 id="auth-title">Вход</h2><button id="close-auth" class="icon-button" aria-label="Закрыть вход">×</button></div><div class="auth-tabs"><button class="text-button" data-auth="login">Вход</button><button class="text-button" data-auth="register">Регистрация</button></div><form id="account-form" data-mode="login"><label>Логин<input id="auth-login" name="login" autocomplete="username" required minlength="3" maxlength="32" pattern="[A-Za-z][A-Za-z0-9_]{2,31}" placeholder="Латинские буквы, цифры и _"></label><label>Пароль<input id="auth-password" name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="128"></label><small id="auth-register-note" hidden>При регистрации гостевые заявки этого браузера перейдут в аккаунт. Новый аккаунт не сбрасывает лимит устройства.</small><p id="auth-error" role="alert"></p><button id="auth-submit" class="button primary" type="submit">Войти</button></form></dialog>
 </body>

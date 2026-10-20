@@ -40,7 +40,14 @@ if ('serviceWorker' in navigator) {
       const worker = registration.installing;
       worker?.addEventListener('statechange',()=>{ if (worker.state==='installed') offer(); });
     });
-  }).catch(()=>{});
+    return navigator.serviceWorker.ready;
+  }).then(()=>{
+    document.querySelector('#install-status').textContent = 'Egebit готов. Выбери способ установки для своего браузера.';
+  }).catch(()=>{
+    document.querySelector('#install-status').textContent = 'Открой сайт в обычном браузере, если установка здесь недоступна.';
+  });
+} else {
+  document.querySelector('#install-status').textContent = 'Установка зависит от браузера. Открой сайт в Safari, Chrome или Edge.';
 }
 
 function networkStatus() {
