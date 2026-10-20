@@ -1,6 +1,7 @@
 'use strict';
 
 let selectedFiles = [], fileThumbUrls = [];
+let libraryIdentity = '', librarySignature = '';
 
 function addAttachments(files) {
   const combined = [...selectedFiles, ...files];
@@ -54,12 +55,17 @@ async function loadLibrary() {
   if (identityToken !== token) return;
   const selection = $('#collection-filter').value;
   const collections = [...new Set(data.items.map((item)=>item.collection))].sort();
-  $('#collection-filter').innerHTML = '<option value="">Все подборки</option>' + collections.map((name)=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
+  const options = '<option value="">Все подборки</option>' + collections.map((name)=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
+  if ($('#collection-filter').innerHTML !== options) $('#collection-filter').innerHTML = options;
   if (collections.includes(selection)) $('#collection-filter').value = selection;
   $('#collection-names').innerHTML = collections.map((name)=>`<option value="${esc(name)}"></option>`).join('');
   const query = $('#library-search').value.trim().toLowerCase(), filter = $('#collection-filter').value;
   const items = data.items.filter((item)=>(!filter || filter===item.collection) && (!query || `${item.text} ${item.source_id} ${item.number}`.toLowerCase().includes(query)));
-  $('#library-items').innerHTML = items.map((item)=>`<article class="panel saved-card"><span class="tag">${esc(item.collection)}</span><h2>Задача #${esc(item.source_id || item.part+1)} · ЕГЭ ${item.number}</h2><p class="preserve">${esc(item.text)}</p>${item.result?.status==='solution'?`<details><summary>Код и ответ</summary><pre><code>${esc(item.result.code)}</code></pre><strong>${esc(item.result.answer)}</strong></details>`:'<p>Решение обновляется.</p>'}<button class="text-button" data-job="${item.job}">Открыть заявку #${item.job} ↗</button></article>`).join('') || '<div class="empty-state">Сохрани готовое решение в подборку кнопкой под ответом.</div>';
+  const signature = JSON.stringify(items);
+  if (libraryIdentity === identityToken && librarySignature === signature) return;
+  const opened = libraryIdentity === identityToken ? new Set([...document.querySelectorAll('#library-items details[open]')].map((item)=>item.dataset.savedKey)) : new Set();
+  $('#library-items').innerHTML = items.map((item)=>`<article class="panel saved-card"><span class="tag">${esc(item.collection)}</span><h2>Задача #${esc(item.source_id || item.part+1)} · ЕГЭ ${item.number}</h2><p class="preserve">${esc(item.text)}</p>${item.result?.status==='solution'?`<details data-saved-key="${item.job}:${item.part}" ${opened.has(`${item.job}:${item.part}`)?'open':''}><summary>Код и ответ</summary><pre><code>${esc(item.result.code)}</code></pre><strong>${esc(item.result.answer)}</strong></details>`:'<p>Решение обновляется.</p>'}<button class="text-button" data-job="${item.job}">Открыть заявку #${item.job} ↗</button></article>`).join('') || '<div class="empty-state">Сохрани готовое решение в подборку кнопкой под ответом.</div>';
+  libraryIdentity = identityToken; librarySignature = signature;
 }
 
 async function loadReports() {
