@@ -349,6 +349,15 @@ document.addEventListener('submit', async (event) => {
 
 $('#condition').addEventListener('input', () => { $('#char-count').textContent = `${$('#condition').value.length.toLocaleString('ru-RU')} / 12 000`; requestId = null; });
 $('#attachment').addEventListener('change', () => { requestId = null; filePreview(); });
+document.addEventListener('paste', (event) => {
+  if (page !== 'solve' || document.querySelector('dialog[open]')) return;
+  const images = [...(event.clipboardData?.files || [])].filter((file) => file.type.startsWith('image/'));
+  if (!images.length) return;
+  event.preventDefault();
+  if (images.length !== 1) return toast('Вставляй по одному изображению. Внутри него может быть несколько задач.', true);
+  const files = new DataTransfer(); files.items.add(images[0]);
+  $('#attachment').files = files.files; requestId = null; filePreview();
+});
 $('#job-search').addEventListener('input', renderJobs);
 $('#job-filter').addEventListener('change', renderJobs);
 $('#all-jobs').addEventListener('change', () => refresh().catch((error) => toast(error.message, true)));

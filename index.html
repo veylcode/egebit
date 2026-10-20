@@ -8,8 +8,8 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src https://egebit-5-83-140-108.sslip.io; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Egebit — кабинет</title>
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=2.5.0">
-  <script src="./app.js?v=2.5.2" defer></script>
+  <link rel="stylesheet" href="./style.css?v=2.5.3">
+  <script src="./app.js?v=2.5.3" defer></script>
 </head>
 <body>
   <aside class="sidebar">
@@ -37,7 +37,7 @@
           <div class="section-title second"><span class="step">2</span><h2>Добавь условие</h2><button class="text-button" data-goto="help">Как писать степени ↗</button></div>
           <label class="sr-only" for="condition">Условие задачи</label><textarea id="condition" maxlength="12000" placeholder="Вставь текст задачи сюда…&#10;&#10;Можно отправить несколько условий сразу. Каждое получит отдельное решение."></textarea>
           <div class="text-meta"><span>Степень: <code>7**270</code> · Основание: <code>ABxCD_27</code></span><span id="char-count">0 / 12 000</span></div>
-          <label id="dropzone" class="dropzone" for="attachment"><span class="upload-icon">↑</span><span><strong>Прикрепить файл</strong> или перетащить сюда<small>Фото, TXT, CSV, PY, PDF, DOCX · до 4 МБ</small></span><input id="attachment" type="file" accept=".jpg,.jpeg,.png,.webp,.txt,.csv,.py,.json,.pdf,.docx" hidden></label>
+          <div id="dropzone" class="dropzone"><span class="upload-icon">↑</span><label for="attachment"><strong>Прикрепить изображение или файл</strong><small id="upload-help">JPG, PNG, WEBP, TXT, CSV, PY, PDF, DOCX · до 4 МБ. Скриншот можно вставить через Ctrl+V.</small></label><input id="attachment" type="file" aria-label="Файл с условием" aria-describedby="upload-help" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.jfif,.png,.webp,.txt,.csv,.py,.json,.pdf,.docx"></div>
           <div id="file-preview" class="file-preview" hidden></div>
           <div class="compose-footer"><p id="submission-note">Без входа условия и ответы доступны только в этом браузере.</p><button class="button primary" id="submit" disabled>Отправить задачу <span>↗</span></button></div>
         </div><aside class="right-column"><div class="quota-card"><div class="quota-top"><span>Лимит задач</span><span>◷ 5 часов</span></div><div class="quota-number"><strong id="quota-left">—</strong><span id="quota-total">задач осталось</span></div><div class="progress-track"><div id="quota-bar"></div></div><div class="quota-details"><b id="quota-percent">Загрузка лимита</b><span id="quota-reset">5 часов</span></div></div><div class="panel mini-panel"><span class="mini-icon">✦</span><h3>Несколько задач</h3><p>Вставь подборку или прикрепи фото. Egebit выделит все читаемые условия и решит каждое отдельно.</p><div class="mini-divider"></div><div class="mini-row"><span>⌘</span><p>Код на Python<br><small>Без комментариев, с простыми переменными</small></p></div><div class="mini-row"><span>✓</span><p>Проверка выполнения<br><small>Запуск в ограниченной песочнице</small></p></div></div><div class="small-note">Время зависит от сложности и очереди. Статус обновляется автоматически.</div></aside></div>
