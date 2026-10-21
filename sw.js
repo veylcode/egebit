@@ -1,9 +1,9 @@
 'use strict';
 
-const CACHE = 'egebit-shell-2.7.1';
+const CACHE = 'egebit-shell-2.8.0';
 const ROOT = new URL('./',self.location.href);
 const SHELL = new URL('./index.html',ROOT).href;
-const FILES = ['index.html','style.css?v=2.7.1','features.js?v=2.7.1','app.js?v=2.7.1','pwa.js?v=2.7.1','icon.svg','icon-192.png','icon-512.png','icon-maskable.png','apple-touch-icon.png','manifest.webmanifest'].map(path=>new URL(path,ROOT).href);
+const FILES = ['index.html','style.css?v=2.8.0','features.js?v=2.8.0','app.js?v=2.8.0','pwa.js?v=2.8.0','icon.svg','icon-192.png','icon-512.png','icon-maskable.png','apple-touch-icon.png','manifest.webmanifest'].map(path=>new URL(path,ROOT).href);
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)));

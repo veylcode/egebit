@@ -23,25 +23,44 @@ function filePreview() {
 
 function clearAttachments() { selectedFiles = []; $('#attachment').value = ''; filePreview(); }
 
-function renderService() {
-  const service = me?.service;
-  if (!service) return;
-  const labels = {ready:'Доступен',low:'Бюджет заканчивается',busy:'Часть бюджета занята запросами',exhausted:'Платные запросы остановлены',paused:'Решения приостановлены'};
-  $('#service-status').textContent = labels[service.status] || 'Загружается';
-  $('#service-card').dataset.state = service.status;
-  $('#service-available').textContent = `${Number(service.available).toFixed(2)} ₽`;
-  $('#service-total').textContent = `из общего предела ${service.limit} ₽ за 7 суток`;
-  $('#service-info').textContent = `Учтено ${Number(service.used).toFixed(2)} ₽ · в резерве запросов ${Number(service.reserved).toFixed(2)} ₽. До ${service.per_task} ₽ на задачу.`;
-  $('#service-release').textContent = service.next_release ? `Старые расходы начнут освобождаться ${date(service.next_release)}.` : 'Общий бюджет расходуется только при обращении к модели.';
-  $('#service-period').textContent = service.temporary_until ? `С ${date(Date.parse(service.temporary_until) / 1000)} — до ${service.after_temporary} ₽ на задачу.` : '';
+let statusBusy = false, statusFetched = 0;
+
+function showAIStatus(status) {
+  $('#service-card').dataset.state = status.state;
+  $('#service-status').textContent = status.title;
+  $('#service-info').textContent = status.detail;
+  $('#service-checked').textContent = status.checked ? 'Проверено ' + new Intl.DateTimeFormat('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit',timeZone:'Europe/Moscow'}).format(new Date(status.checked*1000)) + ' МСК' : 'Ожидаем проверку';
 }
+
+async function loadAIStatus(force=false) {
+  if (statusBusy || document.hidden || (!force && Date.now()-statusFetched<15000)) return;
+  statusBusy = true; statusFetched = Date.now();
+  const controller = new AbortController(), timer = setTimeout(()=>controller.abort(),10000);
+  try {
+    const response = await fetch(API+'/api/status',{signal:controller.signal,credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer'});
+    if (!response.ok) throw new Error('unavailable');
+    showAIStatus(await response.json());
+  } catch {
+    showAIStatus({state:'error',title:'Статус недоступен',detail:'Не удалось обновить статус. Проверь подключение и попробуй позже.'});
+  } finally { clearTimeout(timer); statusBusy=false; }
+}
+
+function renderService() { loadAIStatus(); }
+
+document.addEventListener('DOMContentLoaded',()=>{
+  loadAIStatus(true);
+  setInterval(()=>loadAIStatus(),15000);
+});
+document.addEventListener('visibilitychange',()=>{ if (!document.hidden) loadAIStatus(true); });
+window.addEventListener('online',()=>loadAIStatus(true));
+window.addEventListener('offline',()=>showAIStatus({state:'error',title:'Нет подключения',detail:'Проверь интернет-соединение.'}));
 
 function draftTask(task, index) {
   return `<article class="draft-task"><div class="result-title"><h3 class="preview-caption">Задача ${index + 1}</h3><button type="button" class="text-button" data-remove-preview>Удалить</button></div><div class="draft-fields"><label>Номер ЕГЭ<select name="number">${Array.from({length:27},(_,i)=>`<option value="${i+1}" ${task.number===i+1?'selected':''}>${i+1}</option>`).join('')}</select></label><label>ID источника, если есть<input name="source_id" value="${esc(task.source_id || '')}" inputmode="numeric" pattern="[0-9]{0,9}" maxlength="9"></label></div><label>Проверь и исправь условие<textarea name="condition" required maxlength="12000">${esc(task.text || '')}</textarea></label></article>`;
 }
 
 function previewForm(job) {
-  return `<div class="notice">Найдено задач: <strong id="preview-task-count">${job.preview.length}</strong>. Проверь числа, степени и основания. Решение начнётся после подтверждения. Лишние задачи можно удалить.</div><form class="preview-form" data-job="${job.id}"><div id="preview-tasks">${job.preview.map(draftTask).join('')}</div><div class="detail-actions"><button class="button secondary" type="button" data-add-preview>＋ Добавить пропущенную задачу</button><label>Формат результата<select name="mode"><option value="concise" ${job.mode==='concise'?'selected':''}>Код и ответ</option><option value="explained" ${job.mode==='explained'?'selected':''}>С объяснением</option></select></label></div><p>После подтверждения лимит учтёт оставленные задачи. Расход распознавания сохраняется.</p><button class="button primary" type="submit">Начать решение ↗</button></form>`;
+  return `<div class="notice">Найдено задач: <strong id="preview-task-count">${job.preview.length}</strong>. Проверь числа, степени и основания. Решение начнётся после подтверждения. Лишние задачи можно удалить.</div><form class="preview-form" data-job="${job.id}"><div id="preview-tasks">${job.preview.map(draftTask).join('')}</div><div class="detail-actions"><button class="button secondary" type="button" data-add-preview>＋ Добавить пропущенную задачу</button><label>Формат результата<select name="mode"><option value="concise" ${job.mode==='concise'?'selected':''}>Код и ответ</option><option value="explained" ${job.mode==='explained'?'selected':''}>С объяснением</option></select></label></div><p>После подтверждения лимит учтёт оставленные задачи.</p><button class="button primary" type="submit">Начать решение ↗</button></form>`;
 }
 
 function resultControls(job, part) {
