@@ -22,7 +22,8 @@ document.querySelector('#install-app').addEventListener('click',async()=>{
 document.querySelector('#close-install').addEventListener('click',()=>document.querySelector('#install-dialog').close());
 document.querySelector('#update-app').addEventListener('click',()=>{
   if (!updateWorker) return;
-  if (!confirm('Обновить приложение? Незавершённый текст в открытой форме будет потерян.')) return;
+  if (document.querySelector('#condition')?.value || selectedFiles.length || document.querySelector('form[data-dirty="true"]') || document.querySelector('#study-save-status')?.textContent.includes('несохранённые')) { toast('Сначала сохрани или заверши текущую форму. Обновление доступно позже.', true); return; }
+  if (!confirm('Обновить приложение сейчас?')) return;
   requestedReload = true; updateWorker.postMessage({type:'ACTIVATE_UPDATE'});
 });
 

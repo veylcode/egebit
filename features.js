@@ -95,7 +95,7 @@ async function loadReports() {
 }
 
 function markEdited(target) {
-  const form = target.closest('.refine-form,.preview-form,.favorite-form,.report-form');
+  const form = target.closest('.refine-form,.preview-form,.favorite-form,.report-form,.study-form,#practice-answer-form');
   if (form) form.dataset.dirty = 'true';
 }
 

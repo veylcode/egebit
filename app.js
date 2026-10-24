@@ -1,12 +1,13 @@
 'use strict';
 
-const API = 'https://egebit-5-83-140-108.sslip.io';
+const API = ['127.0.0.1', 'localhost'].includes(location.hostname) ? location.origin : 'https://egebit-5-83-140-108.sslip.io';
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]));
-const names = {solve: 'Новая задача', history: 'Мои заявки', templates: 'Шаблоны', library:'Подборки', help: 'Как пользоваться', admin: 'Управление'};
+const names = {home: 'Главная', study: 'Обучение', trainer: 'Тренажёр', analytics: 'Моя статистика', profile: 'Профиль', solve: 'Новая задача', history: 'Мои заявки', templates: 'Шаблоны', library:'Подборки', help: 'Как пользоваться', admin: 'Управление'};
 const states = {preview:'Проверь условия', queued: 'В очереди', retry: 'Ожидание повтора', running: 'Решаем', delivering: 'Отправляем ответ', done: 'Готово', needs_details: 'Нужно уточнение', failed: 'Ошибка', cancelled: 'Отменено', delivery_failed: 'Ошибка доставки'};
 let token = sessionStorage.getItem('egebit-session') || localStorage.getItem('egebit-account') || localStorage.getItem('egebit-guest') || '';
-let me = null, jobs = [], selected = 14, page = 'solve', detailId = null, pollBusy = false, requestId = null, submitting = false;
+let me = null, jobs = [], selected = 14, page = 'home', detailId = null, pollBusy = false, requestId = null, submitting = false;
+if (['127.0.0.1','localhost'].includes(location.hostname)) $('#main-content').insertAdjacentHTML('afterbegin','<p class="notice local-review"><strong>Локальная версия 3.0</strong> · Учебные данные в этом просмотре тестовые. Рабочий сайт не изменён.</p>');
 
 function toast(text, error = false) {
   $('#toast').textContent = text;
@@ -53,12 +54,16 @@ function date(value) {
 }
 
 function navigate(next) {
-  page = Object.hasOwn(names, next) && (next !== 'admin' || me?.admin) ? next : 'solve';
+  page = Object.hasOwn(names, next) && (next !== 'admin' || me?.admin) ? next : 'home';
   document.querySelectorAll('.page').forEach((element) => { element.hidden = element.id !== `page-${page}`; });
   document.querySelectorAll('[data-page]').forEach((element) => element.classList.toggle('active', element.dataset.page === page));
   $('#page-name').textContent = names[page];
   if (location.hash !== `#${page}`) history.replaceState(null, '', `#${page}`);
+  document.body.classList.remove('menu-open');
+  $('#menu-toggle').setAttribute('aria-expanded', 'false');
+  syncNavigation();
   renderJobs();
+  if (['home','study','trainer','analytics','profile'].includes(page)) return loadStudyPage();
   if (page === 'library') return loadLibrary().catch((error)=>toast(error.message,true));
   if (page === 'admin') return loadAdmin().catch((error) => toast(error.message, true));
 }
@@ -67,6 +72,7 @@ function signedOut() {
   if (token === localStorage.getItem('egebit-account')) localStorage.removeItem('egebit-account');
   if (token === localStorage.getItem('egebit-guest')) localStorage.removeItem('egebit-guest');
   token = ''; me = null; jobs = [];
+  window.EgebitStudy?.reset();
   sessionStorage.removeItem('egebit-session');
   $('#login-card').hidden = false;
   $('#guest-retry').hidden = false;
@@ -115,6 +121,7 @@ function renderMe() {
   document.querySelectorAll('.admin-only').forEach((element) => { element.hidden = !me.admin; });
   if (me.paused) connection('Новые решения приостановлены');
   renderService(); renderGrid(); renderTemplates();
+  window.EgebitStudy?.identity(token, me);
 }
 
 function renderGrid() {
@@ -222,7 +229,7 @@ async function renderDetail() {
     if (!result) return `<article class="result-card"><h3>✦ Задача #${esc(part.source_id || part.part + 1)}</h3><p>${job.state === 'failed' || job.state === 'delivery_failed' ? 'Обработка остановлена. Решение ещё не получено; причина указана выше.' : job.state === 'cancelled' ? 'Заявка отменена.' : 'Задача принята. Здесь появится результат обработки.'}</p></article>`;
     if (result.status === 'failed' || result.verification?.startsWith('Ошибка:')) return `<article class="result-card"><h3>✦ Задача #${esc(part.source_id || part.part + 1)} · решение остановлено</h3><p>${esc(result.error ? errorMessage(result.error) : result.answer)}</p><p>Уточнение изображения не требуется. Условие сохранено; повтор не списывает квоту заново.</p></article>`;
     if (result.status === 'needs_details') return `<article class="result-card"><h3>✦ Задача #${esc(part.source_id || part.part + 1)} · уточнение</h3><p>${esc(result.answer)}</p><details><summary>Распознанное условие</summary><p class="preserve">${esc(part.text || '')}</p></details><form class="refine-form" data-part="${part.part}" data-job="${id}"><textarea name="text" placeholder="Уточнённое условие или пояснение к фото" maxlength="12000"></textarea>${(result.choices || []).map((choice) => `<label class="choice"><input type="radio" name="choice" value="${esc(choice.value)}">${esc(choice.text)}</label>`).join('')}<label class="file-label">Фото этой задачи или данные TXT/CSV <input type="file" name="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp,.txt,.csv"></label><small>До 4 МБ. Фото заменит распознанное условие только этой задачи; готовые ответы сохранятся. Можно вставить фото через Ctrl+V.</small><button class="button primary" type="submit">Продолжить решение ↗</button></form></article>`;
-    return `<article class="result-card"><div class="result-title"><h3>✦ Задача #${esc(part.source_id || part.part + 1)}</h3><button class="text-button" data-copy-part="${part.part}">Копировать код ⧉</button></div><pre><code>${esc(result.code || '')}</code></pre><div class="answer"><span>ОТВЕТ</span><strong>${esc(result.answer)}</strong></div>${job.mode === 'explained' && result.explanation ? `<p class="preserve">${esc(result.explanation)}</p>` : ''}<small class="verification">${esc(result.verification || '')}</small><button class="text-button" data-download-part="${part.part}">Скачать .py ↓</button>${resultControls(job,part)}</article>`;
+    return `<article class="result-card"><div class="result-title"><h3>✦ Задача #${esc(part.source_id || part.part + 1)}</h3><button class="text-button" data-study-topic="${part.number || job.number}">Изучить тему ↗</button></div><div class="result-tabs" role="tablist" aria-label="Результат задачи"><button role="tab" aria-selected="true" data-result-tab="answer">Ответ</button>${result.code ? '<button role="tab" aria-selected="false" data-result-tab="code">Код Python</button>' : ''}${result.explanation ? '<button role="tab" aria-selected="false" data-result-tab="explanation">Объяснение</button>' : ''}${result.verification ? '<button role="tab" aria-selected="false" data-result-tab="verification">Проверка</button>' : ''}</div><div data-result-pane="answer"><div class="answer"><span>Ответ</span><strong>${esc(result.answer)}</strong></div></div>${result.code ? `<div data-result-pane="code" hidden><pre><code>${esc(result.code)}</code></pre><div class="button-row"><button class="text-button" data-copy-part="${part.part}">Копировать код ⧉</button><button class="text-button" data-download-part="${part.part}">Скачать .py ↓</button></div></div>` : ''}${result.explanation ? `<div data-result-pane="explanation" hidden><p class="preserve">${esc(result.explanation)}</p></div>` : ''}${result.verification ? `<div data-result-pane="verification" hidden><p class="preserve">${esc(result.verification)}</p></div>` : ''}${resultControls(job,part)}</article>`;
   }).join('')}${!parts.length && job.kind !== 'task' && job.result ? `<div class="notice">${esc(job.result.answer)}<br>${esc(job.result.explanation || '')}</div>` : !parts.length ? '<div class="empty-state">Условия выделяются после приёма заявки. На фото количество задач пока может быть неизвестно.</div>' : ''}`;
   $('#detail-content').dataset.job = JSON.stringify(job);
   $('#detail-content').dataset.signature = signature;
@@ -261,7 +268,7 @@ async function loadTemplate(number) {
 }
 
 async function refresh(force = false) {
-  if (!token || (pollBusy && !force)) return;
+  if (!token || pollBusy) return;
   const refreshToken = token;
   pollBusy = true;
   try {
@@ -280,7 +287,8 @@ document.addEventListener('click', async (event) => {
   const button = event.target.closest('button, [data-goto]');
   if (!button) return;
   try {
-    if (button.dataset.page || button.dataset.goto) navigate(button.dataset.page || button.dataset.goto);
+    if (button.dataset.studyTopic && !window.EgebitStudy) { navigate('study'); await loadStudyPage(); window.EgebitStudy.openTopic(Number(button.dataset.studyTopic)); }
+    else if (button.dataset.page || button.dataset.goto) navigate(button.dataset.page || button.dataset.goto);
     else if (button.dataset.number) { selected = Number(button.dataset.number); requestId = null; renderGrid(); }
     else if (button.dataset.job) await openJob(button.dataset.job);
     else if (button.dataset.template) { if (me?.admin) await loadTemplate(button.dataset.template); else { selected = Number(button.dataset.template); renderGrid(); navigate('solve'); } }
@@ -333,7 +341,7 @@ document.addEventListener('submit', async (event) => {
         token = data.token; localStorage.setItem('egebit-account',token); localStorage.setItem('egebit-device',data.device);
         sessionStorage.removeItem('egebit-session');
         form.reset(); $('#auth-dialog').close();
-        await refresh(true); await navigate(me.admin ? 'admin' : 'solve'); toast('Вход выполнен.');
+        await refresh(true); await navigate('home'); toast('Вход выполнен.');
       } catch (error) { $('#auth-error').textContent = error.message; }
       finally { submitButton.disabled = false; }
     } else if (form.id === 'settings-form') {
@@ -430,7 +438,56 @@ function openAuth(mode) {
   if (!$('#auth-dialog').open) $('#auth-dialog').showModal();
 }
 $('#auth-dialog').addEventListener('close', () => { $('#auth-password').value = ''; });
-boot();
+queueMicrotask(boot);
 
 $('#collection-filter').addEventListener('change',()=>loadLibrary().catch((error)=>toast(error.message,true)));
 $('#library-search').addEventListener('input',()=>loadLibrary().catch((error)=>toast(error.message,true)));
+
+let studyLoader;
+function loadStudyPage() {
+  const target = page;
+  if (!studyLoader) studyLoader = new Promise((resolve, reject) => {
+    const script = document.createElement('script'); script.src = './study.js?v=3.0.0';
+    script.onload = resolve; script.onerror = () => { studyLoader = null; script.remove(); reject(new Error('Учебный раздел не загрузился. Проверь подключение.')); };
+    document.head.append(script);
+  });
+  return studyLoader.then(() => { if (page === target) return window.EgebitStudy.show(target); }).catch((error) => {
+    const root = document.querySelector('#page-' + target + ' .study-root');
+    if (root && page === target) root.innerHTML = `<div class="empty-state" role="alert">${esc(error.message)}<button class="button secondary" data-goto="${target}">Повторить</button></div>`;
+  });
+}
+
+document.addEventListener('click', (event) => {
+  if (event.target.closest('.skip-link')) { event.preventDefault(); $('#main-content').focus(); return; }
+  const tab = event.target.closest('[data-result-tab]');
+  if (tab) {
+    const card = tab.closest('.result-card');
+    card.querySelectorAll('[data-result-tab]').forEach((button) => button.setAttribute('aria-selected', String(button === tab)));
+    card.querySelectorAll('[data-result-pane]').forEach((pane) => pane.hidden = pane.dataset.resultPane !== tab.dataset.resultTab);
+  }
+  if (event.target.closest('#menu-toggle,#menu-backdrop')) {
+    const open = document.body.classList.toggle('menu-open');
+    $('#menu-toggle').setAttribute('aria-expanded',String(open));
+    syncNavigation();
+  }
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') { document.body.classList.remove('menu-open'); $('#menu-toggle').setAttribute('aria-expanded','false'); syncNavigation(); }
+  const tab = event.target.closest('[role="tab"]');
+  if (tab && ['ArrowLeft','ArrowRight'].includes(event.key)) {
+    event.preventDefault(); const list = [...tab.parentElement.querySelectorAll('[role="tab"]')];
+    const next = list[(list.indexOf(tab) + (event.key === 'ArrowRight' ? 1 : list.length-1)) % list.length]; next.focus(); next.click();
+  }
+});
+window.addEventListener('beforeunload', () => fileThumbUrls.forEach((url)=>URL.revokeObjectURL(url)));
+
+const mobileNavigation = matchMedia('(max-width:700px)');
+function syncNavigation() {
+  const closed = mobileNavigation.matches && !document.body.classList.contains('menu-open');
+  const nav = $('#main-navigation');
+  if (closed && nav.contains(document.activeElement)) $('#menu-toggle').focus();
+  nav.inert = closed;
+  nav.setAttribute('aria-hidden',String(closed));
+}
+mobileNavigation.addEventListener('change',syncNavigation);
+syncNavigation();

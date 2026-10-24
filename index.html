@@ -10,33 +10,42 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-  <title>Egebit — кабинет</title>
+  <title>Egebit — подготовка к ЕГЭ</title>
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=2.8.1">
-  <script src="./features.js?v=2.8.1" defer></script>
-  <script src="./app.js?v=2.8.1" defer></script>
-  <script src="./pwa.js?v=2.8.1" defer></script>
+  <script src="./theme.js?v=3.0.0"></script>
+  <link rel="stylesheet" href="./style.css?v=3.0.0">
+  <script src="./features.js?v=3.0.0" defer></script>
+  <script src="./app.js?v=3.0.0" defer></script>
+  <script src="./pwa.js?v=3.0.0" defer></script>
 </head>
 <body>
-  <aside class="sidebar">
-    <a class="brand" href="#solve"><span class="brand-icon">e<span>:</span></span><strong>egebit<span>ИНФОРМАТИКА ЕГЭ</span></strong></a>
+  <a class="skip-link" href="#main-content">К содержимому</a><button id="menu-backdrop" class="menu-backdrop" aria-label="Закрыть меню" tabindex="-1" hidden></button><aside class="sidebar" id="main-navigation">
+    <a class="brand" href="#home"><span class="brand-mark">e</span><span><strong>egebit</strong><small>ИНФОРМАТИКА ЕГЭ</small></span></a>
 
     <nav aria-label="Основное меню">
-      <button data-page="solve" class="nav active"><span>＋</span>Новая задача</button>
-      <button data-page="history" class="nav"><span>▤</span>Мои заявки<span id="jobs-count" class="nav-count">—</span></button>
-      <button data-page="library" class="nav"><span>★</span>Подборки</button>
+      <span class="nav-label">Подготовка</span>
+      <button data-page="home" class="nav active"><span>⌂</span>Главная</button>
+      <button data-page="solve" class="nav"><span>✦</span>Решить задание</button>
+      <button data-page="study" class="nav"><span>▣</span>Обучение</button>
+      <button data-page="trainer" class="nav"><span>▷</span>Тренажёр ЕГЭ</button>
+      <button data-page="analytics" class="nav"><span>▥</span>Моя статистика</button>
+      <span class="nav-label">Рабочее пространство</span>
+      <button data-page="history" class="nav"><span>▤</span>Мои заявки <small class="nav-count" id="jobs-count">—</small></button>
+      <button data-page="library" class="nav"><span>☆</span>Подборки</button>
       <button data-page="templates" class="nav"><span>⌘</span>Шаблоны</button>
+      <button data-page="profile" class="nav"><span>◎</span>Профиль</button>
       <button data-page="help" class="nav"><span>?</span>Как пользоваться</button>
       <button data-page="admin" class="nav admin-only" hidden><span>⚙</span>Управление</button>
     </nav>
     <div class="sidebar-bottom"><div class="bot-card"><span class="bot-dot"></span><div><strong>Egebit в Telegram</strong><small>Задачи и команды бота</small></div><a href="https://t.me/egebit_bot" target="_blank" rel="noopener noreferrer" aria-label="Открыть бота">↗</a></div><div class="user-card"><div class="avatar" id="avatar">?</div><div><strong id="user-name">Личный кабинет</strong><small id="user-subtitle">Вход через Telegram</small></div><button id="logout" hidden title="Выйти">↪</button></div></div>
   </aside>
   <div class="workspace">
-    <header><div class="breadcrumb">Кабинет <span>/</span> <b id="page-name">Новая задача</b></div><div id="connection" class="connection">Подключение…</div></header>
-    <main>
+    <header><button id="menu-toggle" class="icon-button mobile-menu" aria-label="Открыть меню" aria-controls="main-navigation" aria-expanded="false">☰</button><div class="breadcrumb">Кабинет <span>/</span> <b id="page-name">Новая задача</b></div><div id="connection" class="connection">Подключение…</div></header>
+    <main id="main-content" tabindex="-1">
       <section id="account-strip" class="account-strip"><strong id="account-label">Гостевой режим</strong><div id="account-actions"><button class="button secondary" data-auth="login">Войти</button><button class="button primary" data-auth="register">Регистрация</button></div><button id="account-logout" class="text-button" hidden>Выйти из аккаунта</button></section>
       <section id="login-card" class="login-card"><div class="login-symbol">↗</div><div><h2>Вход необязателен</h2><p>Для входа отправь <button class="inline-copy" id="copy-web">/web</button> в группе бота и открой персональную ссылку. Она действует 5 минут.</p><small>Вход через Telegram подключает историю бота. По логину и паролю — отдельный аккаунт сайта.</small><button id="guest-retry" class="text-button" hidden>Подключить гостевой доступ</button></div><a class="button secondary" href="https://t.me/egebit_bot" target="_blank" rel="noopener noreferrer">Открыть Telegram ↗</a></section>
-      <p id="offline-notice" class="notice" role="status" hidden>Нет интернета. Отправка задач и загрузка решений недоступны; заявки сами не отправляются при возвращении связи.</p><section id="page-solve" class="page">
+      <p id="offline-notice" class="notice" role="status" hidden>Нет интернета. Отправка задач и загрузка решений недоступны; заявки сами не отправляются при возвращении связи.</p><section id="page-home" class="page" hidden><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section><section id="page-study" class="page" hidden><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section><section id="page-trainer" class="page" hidden><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section><section id="page-analytics" class="page" hidden><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section><section id="page-profile" class="page" hidden><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section>
+<section id="page-solve" class="page">
         <div class="page-heading"><div><h1>Новая задача</h1><p>Выбери номер и отправь условие текстом или файлом.</p></div><span class="tag">Python · ЕГЭ 1–27</span></div>
         <div class="solve-layout"><div class="compose panel">
           <div class="section-title"><span class="step">1</span><h2>Какое задание решаем?</h2><span id="selected-label">№14</span></div>
@@ -56,7 +65,7 @@
       <section id="page-templates" class="page" hidden><div class="page-heading"><div><h1>Шаблоны</h1><p>Подходящие примеры помогают боту сохранять нужный стиль решения.</p></div></div><div id="template-grid" class="template-grid"></div><div class="notice">Шаблон — образец, а не гарантия правильности любой задачи. Изменять библиотеку может только владелец.</div></section>
       <section id="page-help" class="page" hidden><div class="page-heading"><div><h1>Как пользоваться</h1></div></div><div class="help-grid"><article class="panel"><h2>Приложение и архив</h2><p>Кнопка «Установить Egebit» находится внизу страницы. Для новых решений нужен интернет. В «Подборках» выбери тему и нажми «Скачать подборку ZIP»: внутри будут условие, код, ответ, объяснение и проверка для каждой задачи. Без выбранной темы скачиваются все подборки, до 500 решений и 10 МиБ текста.</p></article><article class="panel"><h2>1 · Отправка</h2><p>Выбери номер 1–27 и вставь полное условие либо прикрепи файл. Несколько задач на одном фото будут выделены отдельно. Передавай крупные, чёткие изображения без обрезанных строк.</p><p>До 5 вложений в одной заявке: до 4 МБ каждое, вместе до 16 МБ. Для страниц одной задачи включи соответствующую галочку. Сначала проверь распознанные условия, затем нажми «Начать решение». Можно исправить текст, номер и ID, удалить или добавить задачу. До 50 задач, суммарно до 32000 символов.</p></article><article class="panel"><h2>2 · Степени и основания</h2><p>Степень: <code>75**314</code>, <code>75^314</code> или 75³¹⁴.</p><p>Основание: <code>2ExG8_19</code>, <code>2ExG8(19)</code> или 2ExG8₁₉. На фото сохраняй положение верхних и нижних индексов. Если запись неоднозначна, бот попросит уточнение.</p></article><article class="panel"><h2>3 · Лимит и очередь</h2><p>Каждая распознанная задача учитывается отдельно. Пока число задач на фото неизвестно, резервируется одно использование. После распознавания счётчик уточняется.</p><p>Пятичасовое окно начинается с первой принятой задачи; время обновления видно справа. Повтор не списывает лимит задач заново.</p></article><article class="panel"><h2>4 · Результат и проверка</h2><p>Открой заявку: для каждой задачи будет свой код, ответ и фактическая отметка проверки. Код выполняется в изоляции; совпадение вывода с ответом само по себе не доказывает математическую правильность.</p><p>При нехватке данных добавь пояснение, фото этой задачи или исходный TXT/CSV внутри заявки. Ошибки сервиса показываются отдельно от уточнений. Ошибочную заявку можно повторить, ожидающую — отменить.</p></article><article class="panel"><h2>5 · Файлы</h2><p>Фото JPG/PNG/WEBP, TXT/CSV/PY/JSON, текстовый PDF до 20 страниц, DOCX — до 4 МБ. Скан PDF отправляй фотографией. Если в документе важны рисунки, отправь их отдельными изображениями.</p><p>Готовый Python-код можно скопировать или скачать.</p></article><article class="panel"><h2>6 · Вход и регистрация</h2><p>Решать можно без входа. Кнопки «Регистрация» и «Войти» открывают вход по логину и паролю. При регистрации текущие гостевые заявки перейдут в аккаунт; после повторного входа история доступна с другого устройства. Регистрация и выход не обнуляют счётчик задач этого браузера.</p><p>Для входа отправь /web в разрешённой группе и открой персональную ссылку. Не пересылай её. Ссылка действует 5 минут и используется один раз; сеанс — 8 часов.</p><p>Для решения вход не нужен. Лимит — 15 задач за 5 часов на устройство, без общей квоты на сеть. Можно ждать до 3 заявок одновременно. Доступность решения показывается на главной странице.</p><p>Только после входа через Telegram условия и ответы публикуются в группе, а история и лимит общие с ботом. Аккаунт по логину и паролю хранит решения на сайте. Управление доступно только владельцу.</p></article></div></section>
       <section id="page-admin" class="page" hidden><div class="page-heading"><div><h1>Управление</h1><p>Настройки, библиотека и расходы действуют одновременно на сайте и в боте.</p></div></div><div id="admin-content"></div></section>
-    <datalist id="collection-names"></datalist></main><footer><span>Egebit · ЕГЭ по информатике</span><div class="app-actions"><button id="install-app" class="text-button">Установить Egebit</button><button id="update-app" class="text-button" hidden>Обновить приложение</button></div></footer>
+    <datalist id="collection-names"></datalist></main><footer><span>Egebit · ЕГЭ по информатике</span><div class="app-actions"><label class="theme-control">Тема<select id="theme-select" aria-label="Тема оформления"><option value="system">Как на устройстве</option><option value="light">Светлая</option><option value="dark">Тёмная</option></select></label><button id="install-app" class="text-button">Установить Egebit</button><button id="update-app" class="text-button" hidden>Обновить приложение</button></div></footer>
   </div>
   <dialog id="job-dialog"><div class="dialog-header"><div><small>ЗАЯВКА</small><h2 id="detail-title"></h2></div><button id="close-detail" class="icon-button" aria-label="Закрыть">×</button></div><div id="detail-content"></div></dialog>
   <dialog id="install-dialog"><div class="dialog-header"><h2>Установить Egebit</h2><button id="close-install" class="icon-button" aria-label="Закрыть установку">×</button></div><p id="install-status" role="status">Проверяем готовность приложения…</p><p>Android и компьютер: открой меню браузера → «Установить приложение» или «Добавить на главный экран».</p><p>iPhone и iPad: открой сайт в Safari → «Поделиться» → «На экран Домой».</p><p>Новые решения и загрузка подборок требуют интернета. Вход и лимиты остаются прежними.</p></dialog>
