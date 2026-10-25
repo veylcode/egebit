@@ -429,6 +429,11 @@ async function guestAccess() {
 
 function openAuth(mode) {
   const register = mode === 'register';
+  $('#auth-login').maxLength = register ? 32 : 254;
+  $('#auth-login').placeholder = register ? 'Латинские буквы, цифры и _' : 'Логин или подтверждённый email';
+  if (register) $('#auth-login').pattern = '[A-Za-z][A-Za-z0-9_]{2,31}';
+  else $('#auth-login').removeAttribute('pattern');
+  $('#auth-password').maxLength = register ? 128 : 1024;
   $('#account-form').dataset.mode = mode;
   $('#auth-title').textContent = register ? 'Регистрация' : 'Вход';
   $('#auth-submit').textContent = register ? 'Создать аккаунт' : 'Войти';
@@ -447,7 +452,7 @@ let studyLoader;
 function loadStudyPage() {
   const target = page;
   if (!studyLoader) studyLoader = new Promise((resolve, reject) => {
-    const script = document.createElement('script'); script.src = './study.js?v=3.0.0';
+    const script = document.createElement('script'); script.src = './study.js?v=3.0.1';
     script.onload = resolve; script.onerror = () => { studyLoader = null; script.remove(); reject(new Error('Учебный раздел не загрузился. Проверь подключение.')); };
     document.head.append(script);
   });
