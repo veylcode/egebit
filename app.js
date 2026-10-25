@@ -452,7 +452,7 @@ let studyLoader;
 function loadStudyPage() {
   const target = page;
   if (!studyLoader) studyLoader = new Promise((resolve, reject) => {
-    const script = document.createElement('script'); script.src = './study.js?v=3.0.1';
+    const script = document.createElement('script'); script.src = './study.js?v=3.0.2';
     script.onload = resolve; script.onerror = () => { studyLoader = null; script.remove(); reject(new Error('Учебный раздел не загрузился. Проверь подключение.')); };
     document.head.append(script);
   });

@@ -12,11 +12,11 @@
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <title>Egebit — подготовка к ЕГЭ</title>
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <script src="./theme.js?v=3.0.1"></script>
-  <link rel="stylesheet" href="./style.css?v=3.0.1">
-  <script src="./features.js?v=3.0.1" defer></script>
-  <script src="./app.js?v=3.0.1" defer></script>
-  <script src="./pwa.js?v=3.0.1" defer></script>
+  <script src="./theme.js?v=3.0.2"></script>
+  <link rel="stylesheet" href="./style.css?v=3.0.2">
+  <script src="./features.js?v=3.0.2" defer></script>
+  <script src="./app.js?v=3.0.2" defer></script>
+  <script src="./pwa.js?v=3.0.2" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">К содержимому</a><button id="menu-backdrop" class="menu-backdrop" aria-label="Закрыть меню" tabindex="-1" hidden></button><aside class="sidebar" id="main-navigation">
@@ -44,7 +44,15 @@
     <main id="main-content" tabindex="-1">
       <section id="account-strip" class="account-strip"><strong id="account-label">Гостевой режим</strong><div id="account-actions"><button class="button secondary" data-auth="login">Войти</button><button class="button primary" data-auth="register">Регистрация</button></div><button id="account-logout" class="text-button" hidden>Выйти из аккаунта</button></section>
       <section id="login-card" class="login-card"><div class="login-symbol">↗</div><div><h2>Вход необязателен</h2><p>Для входа отправь <button class="inline-copy" id="copy-web">/web</button> в группе бота и открой персональную ссылку. Она действует 5 минут.</p><small>Вход через Telegram подключает историю бота. По логину и паролю — отдельный аккаунт сайта.</small><button id="guest-retry" class="text-button" hidden>Подключить гостевой доступ</button></div><a class="button secondary" href="https://t.me/egebit_bot" target="_blank" rel="noopener noreferrer">Открыть Telegram ↗</a></section>
-      <p id="offline-notice" class="notice" role="status" hidden>Нет интернета. Отправка задач и загрузка решений недоступны; заявки сами не отправляются при возвращении связи.</p><section id="page-home" class="page" hidden><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section><section id="page-study" class="page" hidden><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section><section id="page-trainer" class="page" hidden><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section><section id="page-analytics" class="page" hidden><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section><section id="page-profile" class="page" hidden><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section>
+      <p id="offline-notice" class="notice" role="status" hidden>Нет интернета. Отправка задач и загрузка решений недоступны; заявки сами не отправляются при возвращении связи.</p><section id="page-home" class="page" hidden><aside class="android-banner" aria-labelledby="android-app-title">
+  <div class="android-banner-top">
+    <svg class="android-banner-icon" viewBox="0 0 48 64" fill="none" aria-hidden="true"><rect x="7" y="2" width="34" height="60" rx="8" stroke="currentColor" stroke-width="3"/><path d="M18 9h12M21 55h6M17 31l5 5 10-12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div class="android-banner-copy"><h2 id="android-app-title">Неудобно на сайте? Скачай приложение для Android</h2><p>Egebit теперь можно открыть прямо с экрана телефона. Условия, решения и шаблоны — в одном приложении.</p></div>
+  </div>
+  <ul><li>Сфотографируй задание или прикрепи скриншот и файл.</li><li>Проверь распознанные условия перед отправкой — в том числе несколько задач.</li><li>Переключайся между ответом, Python-кодом и разбором. Копируй код или сохраняй .py.</li><li>Возвращайся к истории, сохраняй решения в подборки и смотри доступные шаблоны.</li><li>Читай уроки и тренируйся по доступным темам.</li><li>Отправляй следующую задачу кнопкой «Решить ещё задание».</li></ul>
+  <div class="android-download"><a class="button primary" href="./downloads/egebit-1.0.0-rc.1.apk" download="Egebit-1.0.0-rc.1.apk" type="application/vnd.android.package-archive">Скачать приложение ↓</a><small>Android 8.0+ · 20 МБ · тестовая версия 1.0.0-rc.1</small></div>
+  <details class="android-install"><summary>Как скачать и установить</summary><ol><li>Открой эту страницу на Android и нажми «Скачать приложение». В Telegram можно скачать APK из объявления в группе.</li><li>Открой файл Egebit в «Загрузках» или в Telegram и нажми «Установить».</li><li>Если Android запросит разрешение, разреши установку из этого источника для браузера или Telegram. После установки разрешение можно выключить. Проверку Play Защиты отключать не нужно.</li><li>Открой Egebit, зарегистрируйся по email и подтверди код из письма. Если уже регистрировался в приложении — просто войди. Для прежнего аккаунта сайта выбери «У меня уже есть аккаунт на сайте».</li></ol><p class="android-note">Нужен интернет. Версия для iPhone не выпускается — на iOS продолжай пользоваться сайтом. Пока нет уведомлений при полностью закрытом приложении. Скачивание доступно без входа.</p></details>
+</aside><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section><section id="page-study" class="page" hidden><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section><section id="page-trainer" class="page" hidden><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section><section id="page-analytics" class="page" hidden><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section><section id="page-profile" class="page" hidden><div class="study-root"><div class="empty-state" role="status">Загружаем раздел…</div></div></section>
 <section id="page-solve" class="page">
         <div class="page-heading"><div><h1>Новая задача</h1><p>Выбери номер и отправь условие текстом или файлом.</p></div><span class="tag">Python · ЕГЭ 1–27</span></div>
         <div class="solve-layout"><div class="compose panel">

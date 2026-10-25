@@ -329,6 +329,28 @@ dialog::backdrop { background:#0b142b80; backdrop-filter:blur(3px); }
 .profile-info div { display:flex; justify-content:space-between; gap:15px; border-bottom:1px solid var(--line); padding-bottom:12px; font-size:12px; }
 .profile-info dt { color:var(--muted); }.profile-info dd { margin:0; text-align:right; }
 .study-status { min-height:22px; font-size:11px; color:var(--muted); }
+.android-banner { margin-bottom:28px; padding:26px; border:1px solid var(--line); border-radius:var(--radius); background:var(--blue-soft); }
+.android-banner-top { display:flex; align-items:start; gap:18px; }
+.android-banner-icon { width:48px; height:56px; flex:none; color:var(--blue); }
+.android-banner-copy { flex:1; min-width:0; }
+.android-banner h2 { font-size:23px; line-height:1.3; margin-bottom:9px; }
+.android-banner p { color:var(--muted); font-size:13px; }
+.android-banner ul { display:grid; grid-template-columns:1fr 1fr; gap:8px 25px; padding-left:19px; margin:18px 0; font-size:13px; }
+.android-download { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
+.android-download small { font-size:11px; }
+.android-install { margin-top:18px; padding-top:16px; border-top:1px solid var(--line); font-size:13px; }
+.android-install summary { cursor:pointer; font-weight:650; color:var(--blue); }
+.android-install ol { padding-left:22px; margin:14px 0; }
+.android-install li+li { margin-top:8px; }
+.android-install .android-note { font-size:12px; }
+@media(max-width:700px) {
+  .android-banner { padding:20px; margin-bottom:22px; }
+  .android-banner-top { gap:12px; }
+  .android-banner-icon { width:32px; height:42px; }
+  .android-banner h2 { font-size:20px; }
+  .android-banner ul { grid-template-columns:1fr; }
+  .android-download .button { width:100%; text-align:center; }
+}
 @media(min-width:1440px) { main { padding:36px 46px 60px; }.dashboard-metrics { grid-template-columns:repeat(6,minmax(0,1fr)); }.metric { padding:22px 18px; }.metric strong { font-size:28px; } }
 @media(max-width:1100px) { .sidebar { width:218px; padding:24px 13px; }.workspace { margin-left:218px; }main { padding:26px; }.workspace header,.workspace footer { padding-left:26px; padding-right:26px; }.study-columns { grid-template-columns:minmax(0,1fr); }.solve-layout { grid-template-columns:minmax(0,1fr) 250px; }.topic-catalog,.template-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.lesson-layout { grid-template-columns:minmax(0,1fr); }.lesson-toc { position:static; display:flex; flex-wrap:wrap; gap:15px; }.job-date { display:none; } }
 @media(max-width:800px) { .sidebar { width:210px; }.workspace { margin-left:210px; }.solve-layout { grid-template-columns:minmax(0,1fr); }.right-column { grid-template-columns:1fr 1fr; }.right-column .mini-panel,.right-column .small-note { display:none; }.admin-layout,.help-grid,.library-grid { grid-template-columns:1fr; }.topic-map { grid-template-columns:repeat(9,minmax(0,1fr)); gap:6px; }.dashboard-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }.metric { padding:18px; }.account-strip { flex-wrap:wrap; } }
