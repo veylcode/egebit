@@ -445,3 +445,10 @@ dialog::backdrop { background:#0b0e1670; backdrop-filter:blur(4px); animation:fa
 }
 @media(max-width:350px) { main { padding:20px 12px; }.panel,.compose,.metric { padding:15px; }.topic-map,.task-grid { gap:5px; }.topic-map button,.task-button { font-size:11px; }.breadcrumb { font-size:10px; }.account-actions { gap:6px; }.account-actions .button { padding:9px 12px; } }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important; animation:none!important; scroll-behavior:auto!important; } }
+
+.appearance-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:20px 0; }
+.appearance-grid label { display:grid; gap:6px; font-size:13px; font-weight:600; }
+.appearance-grid input[type=color] { width:100%; height:46px; padding:4px; }
+.appearance-note { color:var(--muted); font-size:12px; margin-bottom:16px; }
+:root[data-motion=off] *, :root[data-motion=off] *::before, :root[data-motion=off] *::after { transition:none!important; animation:none!important; scroll-behavior:auto!important; }
+@media(max-width:500px) { .appearance-grid { grid-template-columns:1fr; } }
