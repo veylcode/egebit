@@ -3,14 +3,15 @@
 (() => {
   const root = document.documentElement;
   const system = matchMedia('(prefers-color-scheme: dark)');
-  const palettes = {default:'#3457f0', ocean:'#006b9e', violet:'#7044c0', forest:'#157357', rose:'#ad386b', sunset:'#b44b2b', slate:'#52657a', mint:'#007c78', berry:'#a13c86', amber:'#986000'};
-  const fonts = {system:'-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif', arial:'Arial, sans-serif', georgia:'Georgia, serif', verdana:'Verdana, sans-serif', trebuchet:'"Trebuchet MS", sans-serif'};
+  const palettes = {default:'#ff6b1a', ocean:'#006b9e', violet:'#7044c0', forest:'#157357', rose:'#ad386b', sunset:'#b44b2b', slate:'#52657a', mint:'#007c78', berry:'#a13c86', amber:'#986000'};
+  const fonts = {system:'Manrope, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif', arial:'Arial, sans-serif', georgia:'Georgia, serif', verdana:'Verdana, sans-serif', trebuchet:'"Trebuchet MS", sans-serif'};
   const defaults = {preset:'default', accent:palettes.default, font:'system', size:'15', radius:'16', motion:'on'};
   let choice = 'system', settings = {...defaults};
   try {
     choice = localStorage.getItem('egebit-theme') || 'system';
     const saved = JSON.parse(localStorage.getItem('egebit-appearance') || '{}');
     settings = {...settings, ...saved};
+    if (settings.preset === 'default' && settings.accent === '#3457f0') settings.accent = palettes.default;
   } catch {}
   if (!['system','light','dark'].includes(choice)) choice = 'system';
   function apply() {
@@ -18,6 +19,9 @@
     root.dataset.theme = dark ? 'dark' : 'light';
     root.style.colorScheme = root.dataset.theme;
     const color = /^#[0-9a-f]{6}$/i.test(settings.accent) ? settings.accent : palettes.default;
+    const rgb = [1,3,5].map(i => parseInt(color.slice(i,i+2),16)/255).map(v => v <= .04045 ? v/12.92 : ((v+.055)/1.055)**2.4);
+    const luminance = .2126*rgb[0] + .7152*rgb[1] + .0722*rgb[2];
+    root.style.setProperty('--on-accent', luminance > .179 ? '#08090b' : '#fff');
     if (settings.preset === 'default' && color === palettes.default) {
       for (const v of ['--accent','--accent-dark','--accent-light','--accent-soft']) root.style.removeProperty(v);
     } else {
@@ -26,6 +30,7 @@
       root.style.setProperty('--accent-light', color);
       root.style.setProperty('--accent-soft', `color-mix(in srgb, ${color} ${dark ? '22%' : '10%'}, ${dark ? '#13161f' : '#fff'})`);
     }
+    root.dataset.customFont = settings.font !== 'system' ? 'yes' : 'no';
     root.style.fontFamily = fonts[settings.font] || fonts.system;
     root.style.fontSize = (['14','15','17','19'].includes(settings.size) ? settings.size : '15') + 'px';
     const radius = ['8','16','24'].includes(settings.radius) ? Number(settings.radius) : 16;

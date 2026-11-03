@@ -1,9 +1,14 @@
+@font-face { font-family:Manrope; src:url('./fonts/manrope-400.ttf'); font-weight:400; font-display:swap; }
+@font-face { font-family:Manrope; src:url('./fonts/manrope-700.ttf'); font-weight:700; font-display:swap; }
+@font-face { font-family:Unbounded; src:url('./fonts/unbounded-400.ttf'); font-weight:400; font-display:swap; }
+@font-face { font-family:Unbounded; src:url('./fonts/unbounded-700.ttf'); font-weight:700; font-display:swap; }
+@font-face { font-family:JetBrainsMono; src:url('./fonts/jetbrains-mono-400.ttf'); font-weight:400; font-display:swap; }
 :root {
-  --accent:#3457f0; --accent-dark:#2341c4; --accent-light:#6c86ff;
-  --ink:#14171f; --muted:#6b7280;
-  --line:#e8e9ee; --canvas:#fafafa; --surface:#fff; --soft:#f3f4f7;
+  --accent:#ff6b1a; --accent-dark:#b84607; --accent-light:#ffad80;
+  --ink:#08090b; --muted:#555b66;
+  --line:rgba(0,0,0,.14); --canvas:#f4f5f7; --surface:#fff; --soft:#eceef2;
   --green:#0e8f63; --green-soft:#e6f7ef; --red:#d23b3b; --red-soft:#fdeceb;
-  --amber:#a8650f; --amber-soft:#fdf2da; --accent-soft:#edf1ff;
+  --amber:#a63d00; --amber-soft:#fff0e8; --accent-soft:#fff0e8;
   --code:#12141c; --code-ink:#e7ecfb;
   --radius-sm:10px; --radius:16px; --radius-lg:22px;
   --shadow-sm:0 1px 2px #14171f0d, 0 1px 1px #14171f08;
@@ -16,11 +21,11 @@
   -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
 }
 :root[data-theme=dark] {
-  --accent:#8099ff; --accent-dark:#aebcff; --accent-light:#5f78e8;
-  --ink:#edf0f7; --muted:#99a2b5;
-  --line:#262b37; --canvas:#0a0c11; --surface:#13161f; --soft:#1a1e29;
-  --green:#5fd6a6; --green-soft:#103829; --red:#ff9b94; --red-soft:#3a2024;
-  --amber:#f0bd65; --amber-soft:#352b14; --accent-soft:#1c2440;
+  --accent:#ff6b1a; --accent-dark:#ff9a63; --accent-light:#ffb183;
+  --ink:#fff; --muted:#a4a9b0;
+  --line:rgba(255,255,255,.12); --canvas:#000; --surface:#0f0f10; --soft:#1a1b1e;
+  --green:#7cc8ff; --green-soft:#142635; --red:#ff9b94; --red-soft:#3a2024;
+  --amber:#ffa066; --amber-soft:#351f15; --accent-soft:#2c1a12;
   --code:#0a0b11; --code-ink:#dbe3f8;
   --shadow-sm:0 1px 2px #0005; --shadow:0 10px 28px -10px #0007, 0 2px 8px -2px #0006;
   --shadow-lg:0 30px 70px -20px #000a, 0 10px 24px -8px #0008;
@@ -452,3 +457,32 @@ dialog::backdrop { background:#0b0e1670; backdrop-filter:blur(4px); animation:fa
 .appearance-note { color:var(--muted); font-size:12px; margin-bottom:16px; }
 :root[data-motion=off] *, :root[data-motion=off] *::before, :root[data-motion=off] *::after { transition:none!important; animation:none!important; scroll-behavior:auto!important; }
 @media(max-width:500px) { .appearance-grid { grid-template-columns:1fr; } }
+
+/* Визуальная система Egebit по прототипу */
+h1,.brand strong,.metric strong { font-family:Unbounded,system-ui,sans-serif; }
+code,pre,.code-editor { font-family:JetBrainsMono,monospace; }
+.button.primary { background:var(--accent); color:#08090b; }
+.task-button.selected { background:var(--accent); color:#08090b; box-shadow:0 4px 18px color-mix(in srgb,var(--accent) 35%,transparent); }
+.brand-mark { background:var(--canvas); color:var(--ink); border:2px solid var(--accent); border-radius:50%; }
+.step { border-radius:50%; }
+
+.solve-main { display:grid; gap:20px; min-width:0; }
+.solve-main .section-title.second { margin-top:0; }
+.quota-card { background:var(--surface); color:var(--ink); border:1px solid var(--line); box-shadow:none; }
+.quota-card::before { display:none; }
+.quota-top { font-size:13px; font-weight:600; }
+.quota-number strong { font-family:Unbounded,system-ui,sans-serif; font-size:29px; }
+#quota-bar { background:var(--accent); }
+.progress-track { background:var(--soft); }
+
+:root[data-theme=light] a, :root[data-theme=light] .text-button, :root[data-theme=light] .nav.active { color:var(--accent-dark); }
+:root[data-theme=light] .button.primary, :root[data-theme=light] .task-button.selected { color:#08090b; }
+:root[data-custom-font=yes] h1, :root[data-custom-font=yes] .brand strong, :root[data-custom-font=yes] .metric strong { font-family:inherit; }
+
+.button.primary, .task-button.selected, :root[data-theme=light] .button.primary, :root[data-theme=light] .task-button.selected { color:var(--on-accent,#08090b); }
+
+@keyframes egebit-enter { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes egebit-glow { 0%,100% { box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 18%,transparent); } 50% { box-shadow:0 0 0 5px transparent; } }
+.page:not([hidden]) .panel, .page:not([hidden]) .quota-card { animation:egebit-enter .45s var(--ease) both; }
+.nav.active::before { animation:egebit-glow 2.8s ease-in-out infinite; }
+@media (prefers-reduced-motion:reduce) { .page:not([hidden]) .panel,.page:not([hidden]) .quota-card,.nav.active::before { animation:none!important; } }
